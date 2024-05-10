@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <arg name="model" default="$(find car_like_mobile_robot_pkg)/xacro/car_like_mobile_robot.xacro"/> 
+
+    <!-- パラメータを設定する -->
+    <!-- <rosparam file="$(find car_like_mobile_robot_pkg)/config/gazebo_ros_controller.yaml" command="load" /> -->
+
+    <!-- Gazeboワールドを起動 -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="paused" value="false"/>
+        <arg name="use_sim_time" value="true"/>
+        <arg name="gui" value="true"/>
+        <arg name="headless" value="false"/>
+        <arg name="debug" value="false"/>
+    </include>
+
+    <!-- ロボットモデルを起動 -->
+    <param name="robot_description" command="$(find xacro)/xacro $(arg model) --inorder"/>
+    <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+    args="-urdf -model car_like_mobile_robot -param robot_description -z 0.3"/>
+
+    <!-- コントローラの起動 -->
+    <rosparam command="load" file="$(find car_like_mobile_robot_pkg)/config/car_like_mobile_robot.yaml"/>
+    <node name="controller_spawner" pkg="controller_manager"
+        type="spawner" respawn="false"
+        output="screen" ns="/car_like_mobile_robot"
+        args="joint_state_controller vehicle1_front_right_trans vehicle1_front_left_trans front_steering_trans vehicle1_rear_diff_drive_controller"/>
+    
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen">
+        <remap from="/joint_states" to="/car_like_mobile_robot/joint_states" />
+    </node>
+    <node name="circle" pkg="car_like_mobile_robot_pkg" type="circle" output="screen"/>
+
+</launch>

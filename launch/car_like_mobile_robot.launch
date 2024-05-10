@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- car_like_mobile_robotを空のGazeboワールドに出現 -->
+<launch>
+    <arg name="model" default="$(find car_like_mobile_robot_pkg)/xacro/car_like_mobile_robot.xacro"/>   
+    <param name="robot_description" command="$(find xacro)/xacro $(arg model) --inorder"/>
+
+    <!-- パラメータを設定する -->
+    <!-- <rosparam file="$(find car_like_mobile_robot_pkg)/config/gazebo_ros_controller.yaml" command="load" /> -->
+
+    <include file="$(find gazebo_ros)/launch/empty_world.launch" />
+
+    <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+    args="-urdf -model car_like_mobile_robot -param robot_description"/>
+</launch>

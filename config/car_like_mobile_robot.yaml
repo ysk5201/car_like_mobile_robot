@@ -1,0 +1,57 @@
+car_like_mobile_robot:
+  joint_state_controller:
+    type: joint_state_controller/JointStateController
+    publish_rate: 100
+
+  vehicle1_front_right_trans:
+    type         : effort_controllers/JointEffortController
+    joint        : vehicle1_front_right_joint
+    pid          : {p: 100.0, i: 8.0, d: 20.0}
+    publish_rate : 50
+
+  vehicle1_front_left_trans:
+    type         : effort_controllers/JointEffortController
+    joint        : vehicle1_front_left_joint
+    pid          : {p: 100.0, i: 8.0, d: 20.0}
+    publish_rate : 50
+
+  front_steering_trans:
+    type         : effort_controllers/JointPositionController
+    joint        : front_steering_joint
+    pid          : {p: 100.0, i: 8.0, d: 1.0}
+    publish_rate : 50
+
+  vehicle1_rear_diff_drive_controller:
+    type        : "diff_drive_controller/DiffDriveController"
+    right_wheel : 'vehicle1_rear_right_joint'
+    left_wheel  : 'vehicle1_rear_left_joint'
+
+    publish_rate: 20.0
+    cmd_vel_timeout: 1.0
+    wheel_separation : 0.135
+    wheel_radius : 0.05
+    pose_covariance_diagonal : [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
+    twist_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
+
+    # tf
+    #enable_odom_tf: true
+    base_frame_id: base_link
+    odom_frame_id: odom
+    
+    # limits
+    linear:
+      x:
+        has_velocity_limits    : true
+        max_velocity           :  1.00 # m/s
+        min_velocity           : -1.00 # m/s
+        has_acceleration_limits: true
+        max_acceleration       :  1.0 # m/s^2
+        min_acceleration       : -1.0 # m/s^2
+    angular:
+      z:
+        has_velocity_limits    : true
+        max_velocity           :  1.5 # rad/s
+        min_velocity           : -1.5 # rad/s
+        has_acceleration_limits: true
+        max_acceleration       :  1.0  # rad/s^2
+        min_acceleration       : -1.0 # rad/s^2
