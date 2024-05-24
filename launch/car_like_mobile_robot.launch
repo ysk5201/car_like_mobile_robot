@@ -1,14 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- car_like_mobile_robotを空のGazeboワールドに出現 -->
 <launch>
-    <arg name="model" default="$(find car_like_mobile_robot_pkg)/xacro/car_like_mobile_robot.xacro"/>   
+    <!-- 引数 -->
+    <arg name="model" default="$(find car_like_mobile_robot_pkg)/xacro/car_like_mobile_robot.xacro"/>
+    <arg name="gui" default="true" />
+    <arg name="rvizconfig" default="$(find car_like_mobile_robot_pkg)/rviz/urdf.rviz" />   
+
+    <!-- Gazeboワールドを起動 -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="paused" value="false"/>
+        <arg name="use_sim_time" value="true"/>
+        <arg name="gui" value="true"/>
+        <arg name="headless" value="false"/>
+        <arg name="debug" value="false"/>
+    </include>
+
+    <!-- パラメータにモデルを読み込み -->
     <param name="robot_description" command="$(find xacro)/xacro $(arg model) --inorder"/>
 
-    <!-- パラメータを設定する -->
-    <!-- <rosparam file="$(find car_like_mobile_robot_pkg)/config/gazebo_ros_controller.yaml" command="load" /> -->
-
-    <include file="$(find gazebo_ros)/launch/empty_world.launch" />
-
+    <!-- ロボットモデルを起動 -->
     <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-    args="-urdf -model car_like_mobile_robot -param robot_description"/>
+    args="-urdf -model car_like_mobile_robot -param robot_description -z 0.3"/>
+
+    <!-- joint_state_publisherの起動 -->
+    <node if="$(arg gui)" name="joint_state_publisher" pkg="joint_state_publisher_gui" type="joint_state_publisher_gui" />
+    <node unless="$(arg gui)" name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+
+    <!-- robot_state_publisherの起動 -->
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
+    <!-- rvizの起動 -->
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
+    
 </launch>

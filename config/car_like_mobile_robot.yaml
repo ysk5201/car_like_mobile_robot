@@ -15,9 +15,9 @@ car_like_mobile_robot:
     pid          : {p: 100.0, i: 8.0, d: 20.0}
     publish_rate : 50
 
-  front_steering_trans:
+  vehicle1_front_steering_trans:
     type         : effort_controllers/JointPositionController
-    joint        : front_steering_joint
+    joint        : vehicle1_front_steering_joint
     pid          : {p: 100.0, i: 8.0, d: 1.0}
     publish_rate : 50
 
@@ -28,8 +28,8 @@ car_like_mobile_robot:
 
     publish_rate: 20.0
     cmd_vel_timeout: 1.0
-    wheel_separation : 0.135
-    wheel_radius : 0.05
+    wheel_separation : 1.152
+    wheel_radius : 0.3
     pose_covariance_diagonal : [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
     twist_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
 

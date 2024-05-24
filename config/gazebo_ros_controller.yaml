@@ -1,6 +1,0 @@
-gazebo_ros_control/pid_gains:
-  vehicle1_rear_left_wheel_joint: {p: 1.0, i: 0.0, d: 1.0}
-  vehicle1_rear_right_wheel_joint: {p: 1.0, i: 0.0, d: 1.0}
-  vehicle1_front_left_wheel_joint: {p: 1.0, i: 0.0, d: 1.0}
-  vehicle1_front_right_wheel_joint: {p: 1.0, i: 0.0, d: 1.0}
-
