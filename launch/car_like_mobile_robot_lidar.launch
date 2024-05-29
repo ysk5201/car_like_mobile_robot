@@ -2,12 +2,14 @@
 <launch>
     <!-- 引数 -->
     <arg name="model" default="$(find car_like_mobile_robot_pkg)/xacro/car_like_mobile_robot.xacro"/>
-    <arg name="rvizconfig" default="$(find car_like_mobile_robot_pkg)/rviz/urdf.rviz" />
+    <arg name="rvizconfig" default="$(find car_like_mobile_robot_pkg)/rviz/lidar.rviz" />
     <arg name="robot_name" default="car_like_mobile_robot"/>
     <arg name="init_pose" default=""/>
 
     <!-- Gazeboワールドを起動 -->
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="$(find car_like_mobile_robot_pkg)/worlds/lidar.world"/>
+        <arg name="verbose" value="true"/>
         <arg name="paused" value="false"/>
         <arg name="use_sim_time" value="true"/>
         <arg name="gui" value="true"/>

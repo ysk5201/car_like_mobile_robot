@@ -161,6 +161,67 @@
         </gazebo>
     </xacro:macro>
 
+    <!-- LiDARセンサのマクロ -->
+    <xacro:macro name="laser_macro" params="parent prefix xyz">
+        <joint name="${prefix}_joint" type="fixed">
+            <parent link="${parent}"/>
+            <child  link="${prefix}_link"/>
+            <origin xyz="${xyz}" rpy="0 0 0"/>
+        </joint>
+        <link name="${prefix}_link">
+            <inertial>
+                <mass value="1e-5" />
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+            </inertial>
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <cylinder radius="0.1" length="0.15" />
+                </geometry>
+                <material name="red" />
+            </visual>
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <geometry>
+                    <cylinder radius="0.1" length="0.15" />
+                </geometry>
+            </collision>
+        </link>
+        <gazebo reference="${prefix}_link">
+            <material>Gazebo/Red</material>
+            <sensor type="gpu_ray" name="${prefix}">
+                <pose>0 0 0 0 0 0</pose>
+                <visualize>true</visualize>
+                <update_rate>1</update_rate>
+                <ray>
+                    <scan>
+                        <horizontal>
+                            <samples>400</samples>
+                            <resolution>1</resolution>
+                            <min_angle>${-PI / 2}</min_angle>
+                            <max_angle>${PI / 2}</max_angle>
+                        </horizontal>
+                    </scan>
+                    <range>
+                        <min>0.10</min>
+                        <max>30.0</max>
+                        <resolution>0.01</resolution>
+                    </range>
+                    <noise>
+                        <type>gaussian</type>
+                        <mean>0.0</mean>
+                        <stddev>0.01</stddev>
+                    </noise>
+                </ray>
+                <plugin name="gazebo_ros_lidar_controller" filename="libgazebo_ros_gpu_laser.so">
+                    <topicName>/${prefix}_link/scan</topicName>
+                    <frameName>${prefix}_link</frameName>
+                </plugin>
+            </sensor>
+        </gazebo>
+    </xacro:macro> 
+
     <!-- 本体 -->
     <link name="base_link"/>
 
@@ -193,6 +254,10 @@
     <gazebo reference="vehicle1_body_link">
         <material>Gazebo/Gray</material>
     </gazebo>
+
+    <!-- LiDARセンサ -->
+    <xacro:laser_macro prefix="lidar" parent="vehicle1_body_link" xyz="0 0 0.28"/>
+
     <!-- 前輪の車軸と後輪の車軸をつなぐ棒 -->
     <joint name="vehicle1_axle_to_axle_joint" type="fixed">
         <origin xyz="0 0 ${-center_of_vehicle_body_z + axel_to_axel_z}" rpy="0 ${radians(90)} 0"/>
@@ -254,6 +319,7 @@
     <gazebo reference="vehicle1_front_steering_link">
         <material>Gazebo/Yellow</material>
     </gazebo>
+
     <!-- 前輪の車軸-->
     <joint name="vehicle1_front_wheel_axle_joint" type="fixed">
         <parent link="vehicle1_front_steering_link"/>
@@ -283,6 +349,7 @@
     <gazebo reference="vehicle1_front_wheel_axle_link">
         <material>Gazebo/Yellow</material>
     </gazebo>
+
     <!-- 前輪 -->
     <xacro:wheel_macro vehicle="vehicle1" front_or_rear="front" right_or_left="right" parent="vehicle1_front_wheel_axle_link" xyz="0 0 ${-wheel_separation_half_length}" color="red" gazebo_color="Red"/>
     <xacro:wheel_macro vehicle="vehicle1" front_or_rear="front" right_or_left="left" parent="vehicle1_front_wheel_axle_link" xyz="0 0 ${wheel_separation_half_length}" color="red" gazebo_color="Red"/>
@@ -316,6 +383,7 @@
     <gazebo reference="vehicle1_rear_steering_link">
         <material>Gazebo/Yellow</material>
     </gazebo>
+
     <!-- 後輪の車軸-->
     <joint name="vehicle1_rear_wheel_axle_joint" type="fixed">
         <origin xyz="0 0 ${-(axel_to_axel_z - wheel_radius)}" rpy="${radians(-90)} 0 0"/>
@@ -345,6 +413,7 @@
     <gazebo reference="vehicle1_rear_wheel_axle_link">
         <material>Gazebo/Yellow</material>
     </gazebo>
+    
     <!-- 後輪 -->
     <xacro:wheel_macro vehicle="vehicle1" front_or_rear="rear" right_or_left="right" parent="vehicle1_rear_wheel_axle_link" xyz="0 0 ${-wheel_separation_half_length}" color="blue" gazebo_color="Blue"/>
     <xacro:wheel_macro vehicle="vehicle1" front_or_rear="rear" right_or_left="left" parent="vehicle1_rear_wheel_axle_link" xyz="0 0 ${wheel_separation_half_length}" color="blue" gazebo_color="Blue"/>

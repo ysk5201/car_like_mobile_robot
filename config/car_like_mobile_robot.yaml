@@ -34,7 +34,7 @@ car_like_mobile_robot:
     twist_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
 
     # tf
-    #enable_odom_tf: true
+    enable_odom_tf: true
     base_frame_id: base_link
     odom_frame_id: odom
     
