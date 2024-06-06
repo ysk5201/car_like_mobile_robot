@@ -12,6 +12,8 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   tf
+  nav_msgs
+  geometry_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -137,6 +139,8 @@ include_directories(
 # add_executable(${PROJECT_NAME}_node src/car_like_mobile_robot_pkg_node.cpp)
 add_executable(circle src/circle.cpp)
 
+add_executable(calc_wheel_odom src/calc_wheel_odom.cpp)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -152,6 +156,10 @@ add_executable(circle src/circle.cpp)
 #   ${catkin_LIBRARIES}
 # )
 target_link_libraries(circle
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(calc_wheel_odom
   ${catkin_LIBRARIES}
 )
 

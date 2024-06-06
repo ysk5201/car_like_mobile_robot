@@ -37,6 +37,9 @@
     <!-- 各ジョイントの目標値をPublish -->
     <node name="circle" pkg="car_like_mobile_robot_pkg" type="circle" output="screen"/>
 
+    <!-- wheel odometryを計算してtfにpublish -->
+    <node name="calc_wheel_odom" pkg="car_like_mobile_robot_pkg" type="calc_wheel_odom" output="screen"/>
+
     <!-- rvizの起動 -->
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
 
