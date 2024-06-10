@@ -48,6 +48,15 @@
     <xacro:property name="wheel_2nd_visual_cylinder_y" value="${(wheel_radius * 2.0 / 3.0) * sin(5.0 * PI / 6.0)}" />
     <xacro:property name="wheel_3rd_visual_cylinder_x" value="${(wheel_radius * 2.0 / 3.0) * cos(9.0 * PI / 6.0)}" />
     <xacro:property name="wheel_3rd_visual_cylinder_y" value="${(wheel_radius * 2.0 / 3.0) * sin(9.0 * PI / 6.0)}" />
+    <!-- LiDARセンサのパラメータ -->
+    <xacro:property name="lidar_radius" value="0.1" />
+    <xacro:property name="lidar_height" value="0.15" />
+    <xacro:property name="lidar_z" value="${center_of_vehicle_body_z + (0.5 * (vehicle_body_height + lidar_height))}" />
+    <!-- IMUセンサのパラメータ -->
+    <xacro:property name="imu_radius" value="0.08" />
+    <xacro:property name="imu_height" value="0.1" />
+    <!-- <xacro:property name="imu_z" value="${center_of_vehicle_body_z - 0.25 * vehicle_body_height}" /> -->
+    <xacro:property name="imu_z" value="${lidar_z + 0.5 * (lidar_height + imu_height)}" />
 
     <!-- リンクの質量設定 -->
     <xacro:property name="vehicle_body_mass" value="1.0" />
@@ -177,14 +186,14 @@
             <visual>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <cylinder radius="0.1" length="0.15" />
+                    <cylinder radius="${lidar_radius}" length="${lidar_height}" />
                 </geometry>
                 <material name="red" />
             </visual>
             <collision>
                 <origin xyz="0 0 0" rpy="0 0 0"/>
                 <geometry>
-                    <cylinder radius="0.1" length="0.15" />
+                    <cylinder radius="${lidar_radius}" length="${lidar_height}" />
                 </geometry>
             </collision>
         </link>
@@ -222,6 +231,56 @@
         </gazebo>
     </xacro:macro> 
 
+    <!-- IMUセンサを取り付けるマクロ -->
+    <xacro:macro name="imu_macro" params="parent prefix xyz">
+        <!-- IMUセンサを取り付けるジョイント -->
+        <joint name="${prefix}_joint" type="fixed">
+            <parent link="${parent}"/>
+            <child link="${prefix}_link"/>
+            <origin xyz="${xyz}" rpy="0 0 0"/>
+        </joint>
+        <!-- IMUセンサのリンク -->
+        <link name="${prefix}_link">
+            <visual>
+                <geometry>
+                    <cylinder radius="${imu_radius}" length="${imu_height}" />
+                </geometry>
+                <material name="blue"/>
+            </visual>
+            <collision>
+                <geometry>
+                    <cylinder radius="${imu_radius}" length="${imu_height}" />
+                </geometry>
+            </collision>
+            <inertial>
+                <mass value="0.01"/>
+                <inertia ixx="0.0001" ixy="0.0" ixz="0.0" iyy="0.0001" iyz="0.0" izz="0.0001"/>
+            </inertial>
+        </link>
+        <!-- Gazeboプラグインの追加 -->
+        <gazebo reference="${prefix}_link">
+            <gravity>true</gravity>
+            <material>Gazebo/Blue</material>
+            <sensor name="imu_sensor" type="imu">
+                <always_on>true</always_on>
+                <update_rate>100</update_rate>
+                <visualize>true</visualize>
+                <topic>__default_topic__</topic>
+                <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+                    <topicName>/${prefix}_link/imu</topicName>
+                    <bodyName>${prefix}_link</bodyName>
+                    <updateRateHZ>10.0</updateRateHZ>
+                    <gaussianNoise>0.01</gaussianNoise>
+                    <xyzOffset>0 0 0</xyzOffset>
+                    <rpyOffset>0 0 0</rpyOffset>
+                    <frameName>${prefix}_link</frameName>
+                    <initialOrientationAsReference>false</initialOrientationAsReference>
+                </plugin>
+                <pose>0 0 0 0 0 0</pose>
+            </sensor>
+        </gazebo>
+    </xacro:macro>
+
     <!-- 本体 -->
     <link name="base_link"/>
 
@@ -256,7 +315,10 @@
     </gazebo>
 
     <!-- LiDARセンサ -->
-    <xacro:laser_macro prefix="lidar" parent="vehicle1_body_link" xyz="0 0 0.28"/>
+    <xacro:laser_macro prefix="lidar" parent="vehicle1_body_link" xyz="0 0 ${lidar_z - center_of_vehicle_body_z}"/>
+
+    <!-- IMUセンサ -->
+    <xacro:imu_macro prefix="imu" parent="vehicle1_body_link" xyz="0 0 ${imu_z - center_of_vehicle_body_z}"/>
 
     <!-- 前輪の車軸と後輪の車軸をつなぐ棒 -->
     <joint name="vehicle1_axle_to_axle_joint" type="fixed">

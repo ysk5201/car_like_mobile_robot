@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   nav_msgs
   geometry_msgs
+  robot_localization
 )
 
 ## System dependencies are found with CMake's conventions
@@ -141,6 +142,8 @@ add_executable(circle src/circle.cpp)
 
 add_executable(calc_wheel_odom src/calc_wheel_odom.cpp)
 
+add_executable(pub_wheel_odom src/pub_wheel_odom.cpp)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -160,6 +163,10 @@ target_link_libraries(circle
 )
 
 target_link_libraries(calc_wheel_odom
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(pub_wheel_odom
   ${catkin_LIBRARIES}
 )
 
