@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <!-- 引数 -->
+    <arg name="model" default="$(find car_like_mobile_robot_pkg)/xacro/car_like_mobile_robot.xacro"/>
+    <arg name="rvizconfig" default="$(find car_like_mobile_robot_pkg)/rviz/slam_toolbox.rviz" />
+    <arg name="robot_name" default="car_like_mobile_robot"/>
+    <arg name="init_pose" default=""/>
+    <param name="use_sim_time" value="true" />
+
+    <!-- initial pose -->
+    <arg name="x" default="0.0"/>
+    <arg name="y" default="0.0"/>
+    <arg name="z" default="0.3"/>
+    <arg name="yaw" default="0.0"/>
+
+    <!-- Gazeboワールドを起動 -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="$(find car_like_mobile_robot_pkg)/worlds/lidar.world"/>
+        <arg name="verbose" value="true"/>
+        <arg name="paused" value="false"/>
+        <arg name="use_sim_time" value="true"/>
+        <arg name="gui" value="true"/>
+        <arg name="headless" value="false"/>
+        <arg name="debug" value="false"/>
+    </include>
+
+    <!-- パラメータにモデルを読み込み -->
+    <param name="robot_description" command="$(find xacro)/xacro $(arg model) --inorder"/>
+
+    <!-- ロボットモデルを起動 -->
+    <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" 
+        args="-x $(arg x)
+            -y $(arg y)
+            -z $(arg z)
+            -Y $(arg yaw)
+            -param robot_description 
+            -urdf
+            -model $(arg robot_name)"/>
+
+    <!-- コントローラの起動 -->
+    <rosparam command="load" file="$(find car_like_mobile_robot_pkg)/config/car_like_mobile_robot.yaml"/>
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" ns="/car_like_mobile_robot"
+        args="joint_state_controller vehicle1_front_right_trans vehicle1_front_left_trans vehicle1_front_steering_trans vehicle1_rear_diff_drive_controller"/>
+    
+    <!-- robot_state_publisherの起動 -->
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen">
+        <remap from="/joint_states" to="/car_like_mobile_robot/joint_states" />
+    </node>
+
+    <!-- 各ジョイントの目標値をPublish -->
+    <node name="circle" pkg="car_like_mobile_robot_pkg" type="circle" output="screen"/>
+
+    <!-- pub_wheel_odom ノードの起動 -->
+    <node name="pub_wheel_odom" pkg="car_like_mobile_robot_pkg" type="pub_wheel_odom" output="screen" />
+
+    <!-- imu filter -->
+    <node name="imu_filter_madgwick" pkg="imu_filter_madgwick" type="imu_filter_node" clear_params="true">
+        <rosparam command="load" file="$(find car_like_mobile_robot_pkg)/config/imu_filter_madgwick.yaml" />
+        <remap from="imu/data_raw" to="imu_link/imu" />
+    </node>
+
+    <!-- Load the ekf_localization node -->
+    <node name="ekf_localization_node" pkg="robot_localization" type="ekf_localization_node" clear_params="true">
+        <rosparam command="load" file="$(find car_like_mobile_robot_pkg)/config/ekf_params.yaml" />
+        <remap from="/odometry/filtered" to="fusion/odom" />
+        <remap from="odom0" to="filtered_odom" />
+        <remap from="imu0"  to="/imu/data" />
+    </node>
+
+    <!-- slam_toolbox -->
+    <node name="slam_toolbox_node" pkg="slam_toolbox" type="async_slam_toolbox_node" clear_params="true">
+        <rosparam command="load" file="$(find car_like_mobile_robot_pkg)/config/slam_toolbox.yaml" />
+        <remap from="scan" to="/lidar_link/scan" />
+    </node>
+
+    <!-- rvizの起動 -->
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
+
+</launch>

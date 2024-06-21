@@ -58,6 +58,7 @@
   <build_depend>gmapping</build_depend>
   <build_depend>imu_filter_madgwick</build_depend>
   <build_depend>imu_complementary_filter</build_depend>
+  <build_depend>slam_toolbox</build_depend>
   <build_export_depend>roscpp</build_export_depend>
   <build_export_depend>rospy</build_export_depend>
   <build_export_depend>std_msgs</build_export_depend>
@@ -72,6 +73,7 @@
   <exec_depend>gmapping</exec_depend>
   <exec_depend>imu_filter_madgwick</exec_depend>
   <exec_depend>imu_complementary_filter</exec_depend>
+  <exec_depend>slam_toolbox</exec_depend>
   <depend>ros_control</depend>
   <depend>ros_controllers</depend>
 
