@@ -1,0 +1,13 @@
+use_mag: false  # これtrueにしたらimu/dataに値が入らない
+world_frame: enu
+publish_tf: false
+fixed_frame: base_link
+use_tf_ned: false
+use_magnetic_field_msg: false
+gain: 0.5
+zeta: 0.0
+beta: 0.5
+publish_acceleration: false
+output_orientation_covariance: 0.000001
+output_angular_velocity_covariance: 0.000001
+output_linear_acceleration_covariance: 0.1

@@ -55,15 +55,19 @@
     <!-- IMUセンサのパラメータ -->
     <xacro:property name="imu_radius" value="0.08" />
     <xacro:property name="imu_height" value="0.1" />
+    <!-- 車体の中に埋め込む -->
     <!-- <xacro:property name="imu_z" value="${center_of_vehicle_body_z - 0.25 * vehicle_body_height}" /> -->
+    <!-- LiDARセンサの上に乗せる -->
     <xacro:property name="imu_z" value="${lidar_z + 0.5 * (lidar_height + imu_height)}" />
+    <!-- 後輪間中点の上に乗せる -->
+    <!-- <xacro:property name="imu_z" value="${center_of_vehicle_body_z + (0.5 * (vehicle_body_height + imu_height))}" /> -->
 
     <!-- リンクの質量設定 -->
-    <xacro:property name="vehicle_body_mass" value="1.0" />
-    <xacro:property name="vehicle_axle_to_axel_mass" value="1.0" />
-    <xacro:property name="vehicle_steering_mass" value="1.0" />
-    <xacro:property name="vehicle_axel_mass" value="1.0" />
-    <xacro:property name="vehicle_wheel_mass" value="1.0" />
+    <xacro:property name="vehicle_body_mass" value="10.0" />
+    <xacro:property name="vehicle_axle_to_axel_mass" value="5.0" />
+    <xacro:property name="vehicle_steering_mass" value="2.5" />
+    <xacro:property name="vehicle_axel_mass" value="3.0" />
+    <xacro:property name="vehicle_wheel_mass" value="3.0" />
     <xacro:property name="vehicle_wheel_visual_cylinder_mass" value="1.0" />
 
     <!-- リンクのイナーシャの設定 -->
@@ -87,8 +91,10 @@
     <xacro:property name="I_wheel_visual_cylinder_zz" value="${vehicle_wheel_visual_cylinder_mass*wheel_visual_cylinder_radius*wheel_visual_cylinder_radius / 2}" />
 
     <!-- 摩擦力 -->
-    <xacro:property name="mu_1" value="0.5" />
-    <xacro:property name="mu_2" value="0.5" />
+    <xacro:property name="mu_1" value="0.8" />
+    <xacro:property name="mu_2" value="0.8" />
+    <xacro:property name="kp" value="500000" />
+    <xacro:property name="kd" value="10.0" />
 
     <!-- 車輪の回転がわかるように埋め込む黒棒のマクロ -->
     <xacro:macro name="wheel_visual_cylinder_macro" params="vehicle front_or_rear right_or_left nth_cylinder">
@@ -165,8 +171,11 @@
             <material>Gazebo/${gazebo_color}</material>
             <mu1 value="${mu_1}" />
             <mu2 value="${mu_2}" />
-            <kp value="500000" />
-            <kd value="10" />
+            <kp value="${kp}" />
+            <kd value="${kd}" />
+            <!-- <fdir1 value="1 0 0"/> -->
+            <!-- <minDepth value="0.001" /> -->
+            <!-- <maxContacts value="64"/> -->
         </gazebo>
     </xacro:macro>
 
@@ -202,11 +211,11 @@
             <sensor type="gpu_ray" name="${prefix}">
                 <pose>0 0 0 0 0 0</pose>
                 <visualize>true</visualize>
-                <update_rate>1</update_rate>
+                <update_rate>10</update_rate>
                 <ray>
                     <scan>
                         <horizontal>
-                            <samples>400</samples>
+                            <samples>360</samples>
                             <resolution>1</resolution>
                             <min_angle>${-PI / 2}</min_angle>
                             <max_angle>${PI / 2}</max_angle>
@@ -266,7 +275,7 @@
                 <update_rate>100</update_rate>
                 <visualize>true</visualize>
                 <topic>__default_topic__</topic>
-                <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+                <plugin name="imu_plugin" filename="libgazebo_ros_imu_sensor.so">
                     <topicName>/${prefix}_link/imu</topicName>
                     <bodyName>${prefix}_link</bodyName>
                     <updateRateHZ>10.0</updateRateHZ>

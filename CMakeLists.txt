@@ -15,6 +15,10 @@ find_package(catkin REQUIRED COMPONENTS
   nav_msgs
   geometry_msgs
   robot_localization
+  gmapping
+  imu_filter_madgwick
+  imu_complementary_filter
+  filters
 )
 
 ## System dependencies are found with CMake's conventions

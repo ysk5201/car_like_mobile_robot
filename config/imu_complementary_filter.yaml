@@ -1,0 +1,46 @@
+# Gain for the complementary filter for accelerometer data
+# This gain determines how much weight is given to the accelerometer data in the filter.
+# Range: [0, 1]
+gain_acc: 1
+
+# Gain for the complementary filter for magnetometer data
+# This gain determines how much weight is given to the magnetometer data in the filter.
+# Range: [0, 1]
+gain_mag: 0.0
+
+# Bias estimation gain
+# This gain is used for estimating and correcting the bias in gyroscope readings.
+# Range: [0, 1]
+bias_alpha: 1
+
+# Whether to do bias estimation for the angular velocity (gyroscope readings) or not
+# If true, the filter will attempt to estimate and correct for gyroscope bias.
+do_bias_estimation: true
+
+# Whether to use adaptive gain or not
+# Adaptive gain can help the filter adjust to different conditions dynamically.
+do_adaptive_gain: true
+
+# Whether to use the magnetic field data in the data fusion
+# If true, magnetometer data will be included in the orientation estimation.
+use_mag: false
+
+# The parent frame to be used in publish_tf
+# This frame will be used as the reference frame for the IMU orientation.
+fixed_frame: odom
+
+# Whether to publish a TF transform representing the orientation of the IMU
+# If true, a TF transform will be published using fixed_frame as the parent frame.
+publish_tf: false
+
+# If set to true, publish transforms from imu_frame to fixed_frame instead of the other way around
+# This determines the direction of the published transform.
+reverse_tf: false
+
+# The dt (time difference) to use; if 0.0 (default), compute dt dynamically from message headers
+# This can be set to a constant value if needed, otherwise, it is computed dynamically.
+constant_dt: 0.0
+
+# If set to true, publish a couple of debug topics
+# Useful for debugging purposes, additional topics will be published.
+publish_debug_topics: false

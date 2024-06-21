@@ -13,7 +13,7 @@ double theta = 0.0;
 
 const double Lv = 1.0;  // wheel base(車軸間距離)
 const double R = 0.3;   // wheel radius
-const double W = 1.152; // tread width
+const double W = 1.152; // tread width(Lv * 0.8 * 0.8 * 0.9 * 2.0)
 
 ros::Time last_time;
 
