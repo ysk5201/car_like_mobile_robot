@@ -3,7 +3,15 @@
     <!-- 引数 -->
     <arg name="model" default="$(find car_like_mobile_robot_pkg)/xacro/car_like_mobile_robot.xacro"/>
     <arg name="gui" default="true" />
-    <arg name="rvizconfig" default="$(find car_like_mobile_robot_pkg)/rviz/urdf.rviz" />   
+    <arg name="rvizconfig" default="$(find car_like_mobile_robot_pkg)/rviz/urdf.rviz" />  
+    <arg name="robot_name" default="car_like_mobile_robot"/> 
+    <param name="use_sim_time" value="true" />
+
+    <!-- initial pose -->
+    <arg name="x" default="0.0"/>
+    <arg name="y" default="0.0"/>
+    <arg name="z" default="0.3"/>
+    <arg name="yaw" default="0.0"/>
 
     <!-- Gazeboワールドを起動 -->
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
@@ -18,8 +26,14 @@
     <param name="robot_description" command="$(find xacro)/xacro $(arg model) --inorder"/>
 
     <!-- ロボットモデルを起動 -->
-    <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-    args="-urdf -model car_like_mobile_robot -param robot_description -z 0.3"/>
+    <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" 
+        args="-x $(arg x)
+            -y $(arg y)
+            -z $(arg z)
+            -Y $(arg yaw)
+            -param robot_description 
+            -urdf
+            -model $(arg robot_name)"/>
 
     <!-- joint_state_publisherの起動 -->
     <node if="$(arg gui)" name="joint_state_publisher" pkg="joint_state_publisher_gui" type="joint_state_publisher_gui" />

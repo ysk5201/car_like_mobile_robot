@@ -26,19 +26,13 @@
     <!-- 車両のパラメータ -->
     <xacro:property name="Lv" value="1.0" /> <!-- 車軸間距離 -->
     <xacro:property name="vehicle_body_length" value="${Lv * 1.6}" />
-    <xacro:property name="vehicle_body_width" value="${Lv * 0.8}" />
-    <xacro:property name="vehicle_body_height" value="${Lv * 0.4}" />
-    <xacro:property name="center_of_vehicle_body_z" value="${vehicle_body_height}" />
-    <xacro:property name="axel_half_length" value="${vehicle_body_width * 0.8}" /> <!-- 車軸半長 -->
-    <xacro:property name="axel_length" value="${axel_half_length * 2.0}" /> <!-- 車軸長 -->
-    <xacro:property name="axel_radius" value="0.05" /> <!-- 車軸半径 -->
-    <xacro:property name="axel_to_axel_half_length" value="${Lv * 0.5}" /> <!-- 車軸間半長 -->
-    <xacro:property name="axel_to_axel_z" value="${vehicle_body_height * 1.2}" /> <!-- 車軸と車軸をつなぐ棒の高さ -->
-    <xacro:property name="steering_length" value="${axel_to_axel_z - wheel_radius}" /> <!-- ステアリングの高さ -->
+    <xacro:property name="vehicle_body_width" value="${Lv}" />
+    <xacro:property name="vehicle_body_height" value="${Lv * 0.2}" />
+    <xacro:property name="center_of_vehicle_body_z" value="${Lv * 0.8}" />
+    <xacro:property name="wheel_base_half_length" value="${Lv * 0.5}" /> <!-- 車軸間半長 -->
     <!-- 車輪のパラメータ -->
     <xacro:property name="wheel_radius" value="${Lv * 0.3}" />  <!-- 車輪半径 -->
     <xacro:property name="wheel_width" value="${wheel_radius * 0.4}" />  <!-- 車輪幅 -->
-    <xacro:property name="wheel_separation_half_length" value="${axel_half_length*0.9}" />  <!-- 車輪間半長 -->
     <!-- 車輪の回転がわかるようにするための棒のパラメータと、n番目の棒の車輪中心からの相対位置(x,y) -->
     <xacro:property name="wheel_visual_cylinder_radius" value="${wheel_radius * 0.15}" />
     <xacro:property name="wheel_visual_cylinder_length" value="${wheel_width * 1.1}" />
@@ -48,6 +42,20 @@
     <xacro:property name="wheel_2nd_visual_cylinder_y" value="${(wheel_radius * 2.0 / 3.0) * sin(5.0 * PI / 6.0)}" />
     <xacro:property name="wheel_3rd_visual_cylinder_x" value="${(wheel_radius * 2.0 / 3.0) * cos(9.0 * PI / 6.0)}" />
     <xacro:property name="wheel_3rd_visual_cylinder_y" value="${(wheel_radius * 2.0 / 3.0) * sin(9.0 * PI / 6.0)}" />
+    <!-- steeringのパラメータ -->
+    <xacro:property name="steering_radius" value="${wheel_width * 0.6}" />
+    <xacro:property name="steering_height" value="${Lv * 0.04}" />
+    <xacro:property name="left_steering_y" value="${0.5*vehicle_body_width - steering_radius}" />
+    <xacro:property name="right_steering_y" value="${-0.5*vehicle_body_width + steering_radius}" />
+    <!-- steeringの下についている板とその仲間たちのパラメータ -->
+    <xacro:property name="plate_under_the_steering_length" value="${steering_radius*2.0}" />
+    <xacro:property name="plate_under_the_steering_width" value="${steering_radius*4.0}" />
+    <xacro:property name="plate_under_the_steering_height" value="${Lv * 0.04}" />
+    <xacro:property name="side_plate_of_wheel_length" value="${plate_under_the_steering_length}" />
+    <xacro:property name="side_plate_of_wheel_width" value="${0.25*(plate_under_the_steering_width-steering_radius)}" />
+    <xacro:property name="side_plate_of_wheel_height" value="${center_of_vehicle_body_z-(0.5*vehicle_body_height+steering_height+plate_under_the_steering_height) - (wheel_radius-axel_radius*2.0)}" />
+    <xacro:property name="axel_length" value="${plate_under_the_steering_width*1.05}" /> <!-- 車軸長 -->
+    <xacro:property name="axel_radius" value="0.05" /> <!-- 車軸半径 -->
     <!-- LiDARセンサのパラメータ -->
     <xacro:property name="lidar_radius" value="0.1" />
     <xacro:property name="lidar_height" value="0.15" />
@@ -61,44 +69,65 @@
     <xacro:property name="imu_z" value="${lidar_z + 0.5 * (lidar_height + imu_height)}" />
     <!-- 後輪間中点の上に乗せる -->
     <!-- <xacro:property name="imu_z" value="${center_of_vehicle_body_z + (0.5 * (vehicle_body_height + imu_height))}" /> -->
+    <!-- bodyの下に搭載する -->
+    <!-- <xacro:property name="imu_z" value="${center_of_vehicle_body_z - (0.5 * (vehicle_body_height + imu_height))}" /> -->
 
     <!-- リンクの質量設定 -->
-    <xacro:property name="vehicle_body_mass" value="10.0" />
-    <xacro:property name="vehicle_axle_to_axel_mass" value="5.0" />
-    <xacro:property name="vehicle_steering_mass" value="2.5" />
-    <xacro:property name="vehicle_axel_mass" value="3.0" />
-    <xacro:property name="vehicle_wheel_mass" value="3.0" />
-    <xacro:property name="vehicle_wheel_visual_cylinder_mass" value="1.0" />
+    <xacro:property name="body_mass" value="50.0" />
+    <xacro:property name="steering_mass" value="2.0" />
+    <xacro:property name="plate_under_the_steering_mass" value="2.0" />
+    <xacro:property name="side_plate_of_wheel_mass" value="8.0" />
+    <!-- 半径:0.05[m], 幅:0.288[m], 鋼の密度:7850[kg/m^3] -->
+    <xacro:property name="axel_mass" value="17.75" />
+    <!-- 外径:0.3[m], 幅:0.12[m], 内径:0.21[m], ゴムの密度:1500[kg/m^3] -->
+    <xacro:property name="wheel_mass" value="5.19" />
+    <xacro:property name="wheel_visual_cylinder_mass" value="0.0" />
+
+    <!-- タイヤがめり込まないように -->
+    <!-- <xacro:property name="body_mass" value="1.0" />
+    <xacro:property name="steering_mass" value="1.0" />
+    <xacro:property name="plate_under_the_steering_mass" value="1.0" />
+    <xacro:property name="side_plate_of_wheel_mass" value="1.0" />
+    <xacro:property name="axel_mass" value="5.0" />
+    <xacro:property name="wheel_mass" value="1.0" />
+    <xacro:property name="wheel_visual_cylinder_mass" value="0.0" /> -->
 
     <!-- リンクのイナーシャの設定 -->
-    <xacro:property name="I_vehicle_body_xx" value="${vehicle_body_mass*(vehicle_body_height*vehicle_body_height + vehicle_body_length*vehicle_body_length) / 12}" />
-    <xacro:property name="I_vehicle_body_yy" value="${vehicle_body_mass*(vehicle_body_width*vehicle_body_width + vehicle_body_height*vehicle_body_height) / 12}" />
-    <xacro:property name="I_vehicle_body_zz" value="${vehicle_body_mass*(vehicle_body_width*vehicle_body_width + vehicle_body_length*vehicle_body_length) / 12}" />
-    <xacro:property name="I_axel_to_axel_xx" value="${vehicle_axle_to_axel_mass*Lv*Lv / 12}" />
-    <xacro:property name="I_axel_to_axel_yy" value="0.0" />
-    <xacro:property name="I_axel_to_axel_zz" value="${vehicle_axle_to_axel_mass*Lv*Lv / 12}" />
-    <xacro:property name="I_steering_xx" value="${vehicle_steering_mass*(3*axel_radius*axel_radius + steering_length*steering_length) / 12}" />
-    <xacro:property name="I_steering_yy" value="${vehicle_steering_mass*(3*axel_radius*axel_radius + steering_length*steering_length) / 12}" />
-    <xacro:property name="I_steering_zz" value="${vehicle_steering_mass*axel_radius*axel_radius / 2}" />
-    <xacro:property name="I_axel_xx" value="${vehicle_axel_mass*axel_length*axel_length / 12}" />
-    <xacro:property name="I_axel_yy" value="0.0" />
-    <xacro:property name="I_axel_zz" value="${vehicle_axel_mass*axel_length*axel_length / 12}" />
-    <xacro:property name="I_wheel_xx" value="${vehicle_wheel_mass*(3*wheel_radius*wheel_radius + wheel_width*wheel_width) / 12}" />
-    <xacro:property name="I_wheel_yy" value="${vehicle_wheel_mass*(3*wheel_radius*wheel_radius + wheel_width*wheel_width) / 12}" />
-    <xacro:property name="I_wheel_zz" value="${vehicle_wheel_mass*wheel_radius*wheel_radius / 2}" />
-    <xacro:property name="I_wheel_visual_cylinder_xx" value="${vehicle_wheel_visual_cylinder_mass*(3*wheel_visual_cylinder_radius*wheel_visual_cylinder_radius + wheel_visual_cylinder_length*wheel_visual_cylinder_length) / 12}" />
-    <xacro:property name="I_wheel_visual_cylinder_yy" value="${vehicle_wheel_visual_cylinder_mass*(3*wheel_visual_cylinder_radius*wheel_visual_cylinder_radius + wheel_visual_cylinder_length*wheel_visual_cylinder_length) / 12}" />
-    <xacro:property name="I_wheel_visual_cylinder_zz" value="${vehicle_wheel_visual_cylinder_mass*wheel_visual_cylinder_radius*wheel_visual_cylinder_radius / 2}" />
+    <xacro:property name="I_body_xx" value="${body_mass*(vehicle_body_height*vehicle_body_height + vehicle_body_length*vehicle_body_length) / 12}" />
+    <xacro:property name="I_body_yy" value="${body_mass*(vehicle_body_width*vehicle_body_width + vehicle_body_height*vehicle_body_height) / 12}" />
+    <xacro:property name="I_body_zz" value="${body_mass*(vehicle_body_width*vehicle_body_width + vehicle_body_length*vehicle_body_length) / 12}" />
+    <xacro:property name="I_steering_xx" value="${steering_mass*(3*axel_radius*axel_radius + steering_height*steering_height) / 12}" />
+    <xacro:property name="I_steering_yy" value="${steering_mass*(3*axel_radius*axel_radius + steering_height*steering_height) / 12}" />
+    <xacro:property name="I_steering_zz" value="${steering_mass*axel_radius*axel_radius / 2}" />
+    <xacro:property name="I_plate_under_the_steering_xx" value="${plate_under_the_steering_mass*(plate_under_the_steering_height*plate_under_the_steering_height + plate_under_the_steering_length*plate_under_the_steering_length) / 12}" />
+    <xacro:property name="I_plate_under_the_steering_yy" value="${plate_under_the_steering_mass*(plate_under_the_steering_width*plate_under_the_steering_width + plate_under_the_steering_height*plate_under_the_steering_height) / 12}" />
+    <xacro:property name="I_plate_under_the_steering_zz" value="${plate_under_the_steering_mass*(plate_under_the_steering_width*plate_under_the_steering_width + plate_under_the_steering_length*plate_under_the_steering_length) / 12}" />
+    <xacro:property name="I_side_plate_of_wheel_xx" value="${side_plate_of_wheel_mass*(side_plate_of_wheel_height*side_plate_of_wheel_height + side_plate_of_wheel_length*side_plate_of_wheel_length) / 12}" />
+    <xacro:property name="I_side_plate_of_wheel_yy" value="${side_plate_of_wheel_mass*(side_plate_of_wheel_width*side_plate_of_wheel_width + side_plate_of_wheel_height*side_plate_of_wheel_height) / 12}" />
+    <xacro:property name="I_side_plate_of_wheel_zz" value="${side_plate_of_wheel_mass*(side_plate_of_wheel_width*side_plate_of_wheel_width + side_plate_of_wheel_length*side_plate_of_wheel_length) / 12}" />
+    <xacro:property name="I_axel_xx" value="${axel_mass*(3*axel_radius*axel_radius + axel_length*axel_length) / 12}" />
+    <xacro:property name="I_axel_yy" value="${axel_mass*(3*axel_radius*axel_radius + axel_length*axel_length) / 12}" />
+    <xacro:property name="I_axel_zz" value="${axel_mass*axel_radius*axel_radius / 2}" />
+    <xacro:property name="I_wheel_xx" value="${wheel_mass*(3*wheel_radius*wheel_radius + wheel_width*wheel_width) / 12}" />
+    <xacro:property name="I_wheel_yy" value="${wheel_mass*(3*wheel_radius*wheel_radius + wheel_width*wheel_width) / 12}" />
+    <xacro:property name="I_wheel_zz" value="${wheel_mass*wheel_radius*wheel_radius / 2}" />
+    <xacro:property name="I_wheel_visual_cylinder_xx" value="${wheel_visual_cylinder_mass*(3*wheel_visual_cylinder_radius*wheel_visual_cylinder_radius + wheel_visual_cylinder_length*wheel_visual_cylinder_length) / 12}" />
+    <xacro:property name="I_wheel_visual_cylinder_yy" value="${wheel_visual_cylinder_mass*(3*wheel_visual_cylinder_radius*wheel_visual_cylinder_radius + wheel_visual_cylinder_length*wheel_visual_cylinder_length) / 12}" />
+    <xacro:property name="I_wheel_visual_cylinder_zz" value="${wheel_visual_cylinder_mass*wheel_visual_cylinder_radius*wheel_visual_cylinder_radius / 2}" />
 
     <!-- 摩擦力 -->
-    <xacro:property name="mu_1" value="0.8" />
-    <xacro:property name="mu_2" value="0.8" />
-    <xacro:property name="kp" value="500000" />
-    <xacro:property name="kd" value="10.0" />
+    <!-- <xacro:property name="mu_1" value="0.8" />
+    <xacro:property name="mu_2" value="0.8" /> -->
+    <xacro:property name="mu_1" value="1.2" />
+    <xacro:property name="mu_2" value="1.2" />
+    <!-- <xacro:property name="mu_1" value="10" />
+    <xacro:property name="mu_2" value="10" /> -->
+    <xacro:property name="kp" value="2000000" />
+    <xacro:property name="kd" value="100" />
 
     <!-- 車輪の回転がわかるように埋め込む黒棒のマクロ -->
-    <xacro:macro name="wheel_visual_cylinder_macro" params="vehicle front_or_rear right_or_left nth_cylinder">
-        <joint name="${vehicle}_${front_or_rear}_${right_or_left}_${nth_cylinder}_joint" type="fixed">
+    <xacro:macro name="wheel_visual_cylinder_macro" params="vehicle front_or_rear left_or_right nth_cylinder">
+        <joint name="${vehicle}_${front_or_rear}_${left_or_right}_${nth_cylinder}_joint" type="fixed">
             <xacro:if value="${nth_cylinder=='first'}">
                 <origin xyz="${wheel_1st_visual_cylinder_x} ${wheel_1st_visual_cylinder_y} 0" rpy="0 0 0"/>
             </xacro:if>
@@ -108,46 +137,46 @@
             <xacro:if value="${nth_cylinder=='third'}">
                 <origin xyz="${wheel_3rd_visual_cylinder_x} ${wheel_3rd_visual_cylinder_y} 0" rpy="0 0 0"/>
             </xacro:if>
-            <parent link="${vehicle}_${front_or_rear}_${right_or_left}_link"/>
-            <child  link="${vehicle}_${front_or_rear}_${right_or_left}_${nth_cylinder}_link"/>
+            <parent link="${vehicle}_${front_or_rear}_${left_or_right}_link"/>
+            <child  link="${vehicle}_${front_or_rear}_${left_or_right}_${nth_cylinder}_link"/>
         </joint>
-        <link name="${vehicle}_${front_or_rear}_${right_or_left}_${nth_cylinder}_link">
+        <link name="${vehicle}_${front_or_rear}_${left_or_right}_${nth_cylinder}_link">
             <inertial>
                 <origin xyz="0 0 0" rpy="0 0 0"/>
-                <mass value="${vehicle_wheel_visual_cylinder_mass}"/>
+                <mass value="${wheel_visual_cylinder_mass}"/>
                 <inertia ixx="${I_wheel_visual_cylinder_xx}" ixy="0.0" ixz="0.0" iyy="${I_wheel_visual_cylinder_yy}" iyz="0.0" izz="${I_wheel_visual_cylinder_zz}"/>
             </inertial>
             <visual>
                 <geometry>
-                <cylinder radius="${wheel_visual_cylinder_radius}" length="${wheel_visual_cylinder_length}" />
+                    <cylinder radius="${wheel_visual_cylinder_radius}" length="${wheel_visual_cylinder_length}" />
                 </geometry>
                 <material name="black"/>
             </visual>
             <collision>
                 <geometry>
-                <cylinder radius="${wheel_visual_cylinder_radius}" length="${wheel_visual_cylinder_length}" />
+                    <cylinder radius="${wheel_visual_cylinder_radius}" length="${wheel_visual_cylinder_length}" />
                 </geometry>
             </collision>
         </link>
-        <gazebo reference="${vehicle}_${front_or_rear}_${right_or_left}_${nth_cylinder}_link">
+        <gazebo reference="${vehicle}_${front_or_rear}_${left_or_right}_${nth_cylinder}_link">
             <material>Gazebo/Black</material>
         </gazebo>
     </xacro:macro>
 
-    <!-- 車輪のマクロ -->
-    <xacro:macro name="wheel_macro" params="parent vehicle front_or_rear right_or_left xyz color gazebo_color">
-        <joint name="${vehicle}_${front_or_rear}_${right_or_left}_joint" type="continuous">
-            <origin xyz="${xyz}" rpy="0 0 0"/>
+    <!-- wheel macro -->
+    <xacro:macro name="wheel_macro" params="parent vehicle front_or_rear left_or_right color gazebo_color">
+        <joint name="${vehicle}_${front_or_rear}_${left_or_right}_joint" type="continuous">
+            <origin xyz="0 0 ${-(center_of_vehicle_body_z - 0.5*(vehicle_body_height +steering_height) - wheel_radius)}" rpy="${radians(-90)} 0 0"/>
             <parent link="${parent}"/>
-            <child  link="${vehicle}_${front_or_rear}_${right_or_left}_link"/>
+            <child  link="${vehicle}_${front_or_rear}_${left_or_right}_link"/>
             <axis xyz="0 0 1" />
-            <!-- <limit velocity="12.0" effort="10.0" /> -->
+            <limit velocity="10.0" effort="51.0" />
             <!-- <dynamics damping="0.1"/> -->
         </joint>
-        <link name="${vehicle}_${front_or_rear}_${right_or_left}_link">
+        <link name="${vehicle}_${front_or_rear}_${left_or_right}_link">
             <inertial>
                 <origin xyz="0 0 0" rpy="0 0 0"/>
-                <mass value="${vehicle_wheel_mass}"/>
+                <mass value="${wheel_mass}"/>
                 <inertia ixx="${I_wheel_xx}" ixy="0.0" ixz="0.0" iyy="${I_wheel_yy}" iyz="0.0" izz="${I_wheel_zz}"/>
             </inertial>
             <visual>
@@ -163,11 +192,11 @@
             </collision>
         </link>
         <!-- 回転がわかるように3つの黒棒を埋め込む -->
-        <xacro:wheel_visual_cylinder_macro vehicle="${vehicle}" front_or_rear="${front_or_rear}" right_or_left="${right_or_left}" nth_cylinder="first"/>
-        <xacro:wheel_visual_cylinder_macro vehicle="${vehicle}" front_or_rear="${front_or_rear}" right_or_left="${right_or_left}" nth_cylinder="second"/>
-        <xacro:wheel_visual_cylinder_macro vehicle="${vehicle}" front_or_rear="${front_or_rear}" right_or_left="${right_or_left}" nth_cylinder="third"/>
+        <xacro:wheel_visual_cylinder_macro vehicle="${vehicle}" front_or_rear="${front_or_rear}" left_or_right ="${left_or_right}" nth_cylinder="first"/>
+        <xacro:wheel_visual_cylinder_macro vehicle="${vehicle}" front_or_rear="${front_or_rear}" left_or_right ="${left_or_right}" nth_cylinder="second"/>
+        <xacro:wheel_visual_cylinder_macro vehicle="${vehicle}" front_or_rear="${front_or_rear}" left_or_right ="${left_or_right}" nth_cylinder="third"/>
 
-        <gazebo reference="${vehicle}_${front_or_rear}_${right_or_left}_link">
+        <gazebo reference="${vehicle}_${front_or_rear}_${left_or_right}_link">
             <material>Gazebo/${gazebo_color}</material>
             <mu1 value="${mu_1}" />
             <mu2 value="${mu_2}" />
@@ -177,6 +206,159 @@
             <!-- <minDepth value="0.001" /> -->
             <!-- <maxContacts value="64"/> -->
         </gazebo>
+    </xacro:macro>
+
+    <!-- side_plate_of_wheel_macro -->
+    <xacro:macro name="side_plate_of_wheel_macro" params="parent front_or_rear left_or_right left_plate_or_right_plate">
+        <joint name="vehicle1_${left_plate_or_right_plate}_plate_of_${front_or_rear}_${left_or_right}_wheel_joint" type="fixed">
+            <xacro:if value="${left_plate_or_right_plate=='left'}">
+                <origin xyz="0 ${0.5*(plate_under_the_steering_width - side_plate_of_wheel_width)} ${-0.5 *(plate_under_the_steering_height + side_plate_of_wheel_height)}" rpy="0 0 0"/>
+            </xacro:if>
+            <xacro:if value="${left_plate_or_right_plate=='right'}">
+                <origin xyz="0 ${-0.5*(plate_under_the_steering_width - side_plate_of_wheel_width)} ${-0.5 *(plate_under_the_steering_height + side_plate_of_wheel_height)}" rpy="0 0 0"/>
+            </xacro:if>
+            <parent link="${parent}"/>
+            <child  link="vehicle1_${left_plate_or_right_plate}_plate_of_${front_or_rear}_${left_or_right}_wheel_link"/>
+        </joint>
+        <link name="vehicle1_${left_plate_or_right_plate}_plate_of_${front_or_rear}_${left_or_right}_wheel_link">
+            <inertial>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <mass value="${side_plate_of_wheel_mass}"/>
+                <inertia ixx="${I_side_plate_of_wheel_xx}" ixy="0.0" ixz="0.0" iyy="${I_side_plate_of_wheel_yy}" iyz="0.0" izz="${I_side_plate_of_wheel_zz}"/>
+            </inertial>
+            <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <box size="${side_plate_of_wheel_length} ${side_plate_of_wheel_width} ${side_plate_of_wheel_height}" />
+                </geometry>
+                <material name="yellow" />
+            </visual>
+            <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <box size="${side_plate_of_wheel_length} ${side_plate_of_wheel_width} ${side_plate_of_wheel_height}" />
+                </geometry>
+            </collision>
+        </link>
+        <gazebo reference="vehicle1_${left_plate_or_right_plate}_plate_of_${front_or_rear}_${left_or_right}_wheel_link">
+            <material>Gazebo/Yellow</material>
+        </gazebo>
+    </xacro:macro>
+
+    <!-- ${front_or_rear}_${left_or_right}_steering_and_wheel_macro -->
+    <xacro:macro name="steering_and_wheel_macro" params="parent xyz front_or_rear left_or_right">
+        <!-- steering -->
+        <xacro:if value="${front_or_rear=='front'}">
+            <xacro:property name="wheel_joint_type" value="revolute" />
+        </xacro:if>
+        <xacro:if value="${front_or_rear=='rear'}">
+            <xacro:property name="wheel_joint_type" value="fixed" />
+        </xacro:if>
+        <joint name="vehicle1_${front_or_rear}_${left_or_right}_steering_joint" type="${wheel_joint_type}">
+            <origin xyz="${xyz}" rpy="0 0 0"/>
+            <parent link="${parent}"/>
+            <child  link="vehicle1_${front_or_rear}_${left_or_right}_steering_link"/>
+            <xacro:if value="${front_or_rear=='front'}">
+                <axis xyz="0 0 1" />
+                <limit lower="-1.57" upper="1.57" effort="1000.0" velocity="10.0"/>
+            </xacro:if>
+        </joint>
+        <link name="vehicle1_${front_or_rear}_${left_or_right}_steering_link">
+            <inertial>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <mass value="${steering_mass}"/>
+                <inertia ixx="${I_steering_xx}" ixy="0.0" ixz="0.0" iyy="${I_steering_yy}" iyz="0.0" izz="${I_steering_zz}"/>
+            </inertial>
+            <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <cylinder radius="${steering_radius}" length="${steering_height}" />
+                </geometry>
+                <material name="yellow" />
+            </visual>
+            <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <cylinder radius="${steering_radius}" length="${steering_height}" />
+                </geometry>
+            </collision>
+        </link>
+        <gazebo reference="vehicle1_${front_or_rear}_${left_or_right}_steering_link">
+            <material>Gazebo/Yellow</material>
+        </gazebo>
+
+        <!-- wheel -->
+        <xacro:if value="${front_or_rear=='front'}">
+            <xacro:wheel_macro vehicle="vehicle1" front_or_rear="${front_or_rear}" left_or_right ="${left_or_right}" parent="vehicle1_${front_or_rear}_${left_or_right}_steering_link" color="red" gazebo_color="Red"/>
+        </xacro:if>
+        <xacro:if value="${front_or_rear=='rear'}">
+            <xacro:wheel_macro vehicle="vehicle1" front_or_rear="${front_or_rear}" left_or_right ="${left_or_right}" parent="vehicle1_${front_or_rear}_${left_or_right}_steering_link" color="blue" gazebo_color="Blue"/>
+        </xacro:if>
+
+        <!-- plate under the steering -->
+        <joint name="vehicle1_plate_under_the_${front_or_rear}_${left_or_right}_steering_joint" type="fixed">
+            <origin xyz="0 0 ${-0.5 *(steering_height + plate_under_the_steering_height)}" rpy="0 0 0"/>
+            <parent link="vehicle1_${front_or_rear}_${left_or_right}_steering_link"/>
+            <child  link="vehicle1_plate_under_the_${front_or_rear}_${left_or_right}_steering_link"/>
+        </joint>
+        <link name="vehicle1_plate_under_the_${front_or_rear}_${left_or_right}_steering_link">
+            <inertial>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <mass value="${plate_under_the_steering_mass}"/>
+                <inertia ixx="${I_plate_under_the_steering_xx}" ixy="0.0" ixz="0.0" iyy="${I_plate_under_the_steering_yy}" iyz="0.0" izz="${I_plate_under_the_steering_zz}"/>
+            </inertial>
+            <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <box size="${plate_under_the_steering_length} ${plate_under_the_steering_width} ${plate_under_the_steering_height}" />
+                </geometry>
+                <material name="yellow" />
+            </visual>
+            <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <box size="${plate_under_the_steering_length} ${plate_under_the_steering_width} ${plate_under_the_steering_height}" />
+                </geometry>
+            </collision>
+        </link>
+        <gazebo reference="vehicle1_plate_under_the_${front_or_rear}_${left_or_right}_steering_link">
+            <material>Gazebo/Yellow</material>
+        </gazebo>
+
+        <!-- side plate of wheel -->
+        <xacro:side_plate_of_wheel_macro parent="vehicle1_plate_under_the_${front_or_rear}_${left_or_right}_steering_link" front_or_rear="${front_or_rear}" left_or_right="${left_or_right}" left_plate_or_right_plate="left"/>  
+        <xacro:side_plate_of_wheel_macro parent="vehicle1_plate_under_the_${front_or_rear}_${left_or_right}_steering_link" front_or_rear="${front_or_rear}" left_or_right="${left_or_right}" left_plate_or_right_plate="right"/>
+
+        <!-- axel of wheel -->
+        <joint name="vehicle1_${front_or_rear}_${left_or_right}_wheel_axle_joint" type="fixed">
+            <origin xyz="0 0 ${-((center_of_vehicle_body_z - 0.5*vehicle_body_height -steering_height -0.5*plate_under_the_steering_height) - wheel_radius)}" rpy="${radians(-90)} 0 0"/>
+            <parent link="vehicle1_plate_under_the_${front_or_rear}_${left_or_right}_steering_link"/>
+            <child  link="vehicle1_${front_or_rear}_${left_or_right}_wheel_axle_link"/>
+        </joint>
+        <link name="vehicle1_${front_or_rear}_${left_or_right}_wheel_axle_link">
+            <inertial>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <mass value="${axel_mass}"/>
+                <inertia ixx="${I_axel_xx}" ixy="0.0" ixz="0.0" iyy="${I_axel_yy}" iyz="0.0" izz="${I_axel_zz}"/>
+            </inertial>
+            <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <cylinder radius="${axel_radius}" length="${axel_length}" />
+                </geometry>
+                <material name="black" />
+            </visual>
+            <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <cylinder radius="${axel_radius}" length="${axel_length}" />
+                </geometry>
+            </collision>
+        </link>
+        <gazebo reference="vehicle1_${front_or_rear}_${left_or_right}_wheel_axle_link">
+            <material>Gazebo/Black</material>
+        </gazebo>
+        
     </xacro:macro>
 
     <!-- LiDARセンサのマクロ -->
@@ -210,12 +392,12 @@
             <material>Gazebo/Red</material>
             <sensor type="gpu_ray" name="${prefix}">
                 <pose>0 0 0 0 0 0</pose>
-                <visualize>true</visualize>
-                <update_rate>10</update_rate>
+                <visualize>false</visualize>
+                <update_rate>30</update_rate>
                 <ray>
                     <scan>
                         <horizontal>
-                            <samples>360</samples>
+                            <samples>720</samples>
                             <resolution>1</resolution>
                             <min_angle>${-PI / 2}</min_angle>
                             <max_angle>${PI / 2}</max_angle>
@@ -229,7 +411,7 @@
                     <noise>
                         <type>gaussian</type>
                         <mean>0.0</mean>
-                        <stddev>0.01</stddev>
+                        <stddev>0.001</stddev>
                     </noise>
                 </ray>
                 <plugin name="gazebo_ros_lidar_controller" filename="libgazebo_ros_gpu_laser.so">
@@ -272,7 +454,7 @@
             <material>Gazebo/Blue</material>
             <sensor name="imu_sensor" type="imu">
                 <always_on>true</always_on>
-                <update_rate>100</update_rate>
+                <update_rate>1000</update_rate>
                 <visualize>true</visualize>
                 <topic>__default_topic__</topic>
                 <plugin name="imu_plugin" filename="libgazebo_ros_imu_sensor.so">
@@ -280,10 +462,11 @@
                     <bodyName>${prefix}_link</bodyName>
                     <updateRateHZ>10.0</updateRateHZ>
                     <gaussianNoise>0.01</gaussianNoise>
+                    <!-- <gaussianNoise>0.00</gaussianNoise> -->
                     <xyzOffset>0 0 0</xyzOffset>
                     <rpyOffset>0 0 0</rpyOffset>
                     <frameName>${prefix}_link</frameName>
-                    <initialOrientationAsReference>false</initialOrientationAsReference>
+                    <!-- <initialOrientationAsReference>false</initialOrientationAsReference> -->
                 </plugin>
                 <pose>0 0 0 0 0 0</pose>
             </sensor>
@@ -297,13 +480,16 @@
     <joint name="vehicle1_body_joint" type="fixed">
         <parent link="base_link"/>
         <child  link="vehicle1_body_link"/>
-        <origin xyz="${axel_to_axel_half_length} 0 ${center_of_vehicle_body_z}" rpy="0 0 0"/>
+        <!-- 車体中心を基準位置 -->
+        <origin xyz="0 0 ${center_of_vehicle_body_z}" rpy="0 0 0"/>
+        <!-- 後輪中点を基準位置 -->
+        <!-- <origin xyz="${wheel_base_half_length} 0 ${center_of_vehicle_body_z}" rpy="0 0 0"/>  -->
     </joint>
     <link name="vehicle1_body_link">
         <inertial>
             <origin xyz="0 0 0" rpy="0 0 0"/>
-            <mass value="${vehicle_body_mass}"/>
-            <inertia ixx="${I_vehicle_body_xx}" ixy="0.0" ixz="0.0" iyy="${I_vehicle_body_yy}" iyz="0.0" izz="${I_vehicle_body_zz}"/>
+            <mass value="${body_mass}"/>
+            <inertia ixx="${I_body_xx}" ixy="0.0" ixz="0.0" iyy="${I_body_yy}" iyz="0.0" izz="${I_body_zz}"/>
         </inertial>
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
@@ -323,184 +509,20 @@
         <material>Gazebo/Gray</material>
     </gazebo>
 
-    <!-- LiDARセンサ -->
+    <!-- LiDAR sensor -->
     <xacro:laser_macro prefix="lidar" parent="vehicle1_body_link" xyz="0 0 ${lidar_z - center_of_vehicle_body_z}"/>
 
-    <!-- IMUセンサ -->
+    <!-- IMU sensor -->
     <xacro:imu_macro prefix="imu" parent="vehicle1_body_link" xyz="0 0 ${imu_z - center_of_vehicle_body_z}"/>
 
-    <!-- 前輪の車軸と後輪の車軸をつなぐ棒 -->
-    <joint name="vehicle1_axle_to_axle_joint" type="fixed">
-        <origin xyz="0 0 ${-center_of_vehicle_body_z + axel_to_axel_z}" rpy="0 ${radians(90)} 0"/>
-        <parent link="vehicle1_body_link"/>
-        <child  link="vehicle1_axel_to_axle_link"/>
-    </joint>
-    <link name="vehicle1_axel_to_axle_link">
-        <inertial>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <mass value="${vehicle_axle_to_axel_mass}"/>
-            <inertia ixx="${I_axel_to_axel_xx}" ixy="0.0" ixz="0.0" iyy="${I_axel_to_axel_yy}" iyz="0.0" izz="${I_axel_to_axel_zz}"/>
-        </inertial>
-        <visual>
-        <origin xyz="0 0 0" rpy="0 0 0" />
-            <geometry>
-                <cylinder radius="${axel_radius}" length="${(axel_to_axel_half_length+axel_radius)*2}" />
-            </geometry>
-            <material name="yellow" />
-        </visual>
-        <collision>
-        <origin xyz="0 0 0" rpy="0 0 0" />
-            <geometry>
-                <cylinder radius="${axel_radius}" length="${(axel_to_axel_half_length+axel_radius)*2}" />
-            </geometry>
-        </collision>
-    </link>
-    <gazebo reference="vehicle1_axel_to_axle_link">
-        <material>Gazebo/Yellow</material>
-    </gazebo>
-
-    <!-- (前輪の車軸と後輪の車軸をつなぐ棒)と(前輪の車軸)をつなぐ縦棒 -->
-    <joint name="vehicle1_front_steering_joint" type="revolute">
-        <parent link="vehicle1_axel_to_axle_link"/>
-        <child  link="vehicle1_front_steering_link"/>
-        <origin xyz="0 0 ${axel_to_axel_half_length}" rpy="0 ${radians(-90)} 0"/>
-        <axis xyz="0 0 1" />
-        <limit lower="-1.57" upper="1.57" effort="1000.0" velocity="10.0"/>
-    </joint>
-    <link name="vehicle1_front_steering_link">
-        <inertial>
-            <origin xyz="0 0 ${-(axel_to_axel_z - wheel_radius)*0.5}" rpy="0 0 0"/>
-            <mass value="${vehicle_steering_mass}"/>
-            <inertia ixx="${I_steering_xx}" ixy="0.0" ixz="0.0" iyy="${I_steering_yy}" iyz="0.0" izz="${I_steering_zz}"/>
-        </inertial>
-        <visual>
-        <origin xyz="0 0 ${-(axel_to_axel_z - wheel_radius)*0.5}" rpy="0 0 0" />
-            <geometry>
-                <cylinder radius="${axel_radius}" length="${axel_to_axel_z - wheel_radius}" />
-            </geometry>
-            <material name="yellow" />
-        </visual>
-        <collision>
-        <origin xyz="0 0 ${-(axel_to_axel_z - wheel_radius)*0.5}" rpy="0 0 0" />
-            <geometry>
-                <cylinder radius="${axel_radius}" length="${axel_to_axel_z - wheel_radius}" />
-            </geometry>
-        </collision>
-    </link>
-    <gazebo reference="vehicle1_front_steering_link">
-        <material>Gazebo/Yellow</material>
-    </gazebo>
-
-    <!-- 前輪の車軸-->
-    <joint name="vehicle1_front_wheel_axle_joint" type="fixed">
-        <parent link="vehicle1_front_steering_link"/>
-        <child  link="vehicle1_front_wheel_axle_link"/>
-        <origin xyz="0 0 ${-(axel_to_axel_z - wheel_radius)}" rpy="${radians(-90)} 0 0"/>
-    </joint>
-    <link name="vehicle1_front_wheel_axle_link">
-        <inertial>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <mass value="${vehicle_axel_mass}"/>
-            <inertia ixx="${I_axel_xx}" ixy="0.0" ixz="0.0" iyy="${I_axel_yy}" iyz="0.0" izz="${I_axel_zz}"/>
-        </inertial>
-        <visual>
-        <origin xyz="0 0 0" rpy="0 0 0" />
-            <geometry>
-                <cylinder radius="${axel_radius}" length="${axel_half_length*2}" />
-            </geometry>
-            <material name="yellow" />
-        </visual>
-        <collision>
-        <origin xyz="0 0 0" rpy="0 0 0" />
-            <geometry>
-                <cylinder radius="${axel_radius}" length="${axel_half_length*2}" />
-            </geometry>
-        </collision>
-    </link>
-    <gazebo reference="vehicle1_front_wheel_axle_link">
-        <material>Gazebo/Yellow</material>
-    </gazebo>
-
-    <!-- 前輪 -->
-    <xacro:wheel_macro vehicle="vehicle1" front_or_rear="front" right_or_left="right" parent="vehicle1_front_wheel_axle_link" xyz="0 0 ${-wheel_separation_half_length}" color="red" gazebo_color="Red"/>
-    <xacro:wheel_macro vehicle="vehicle1" front_or_rear="front" right_or_left="left" parent="vehicle1_front_wheel_axle_link" xyz="0 0 ${wheel_separation_half_length}" color="red" gazebo_color="Red"/>
+    <!-- steering and wheel -->
+    <xacro:steering_and_wheel_macro parent="vehicle1_body_link" xyz="${wheel_base_half_length} ${left_steering_y} ${-0.5 *(vehicle_body_height + steering_height)}" front_or_rear="front" left_or_right="left"/>
+    <xacro:steering_and_wheel_macro parent="vehicle1_body_link" xyz="${wheel_base_half_length} ${right_steering_y} ${-0.5 *(vehicle_body_height + steering_height)}" front_or_rear="front" left_or_right="right"/>
+    <xacro:steering_and_wheel_macro parent="vehicle1_body_link" xyz="${-wheel_base_half_length} ${left_steering_y} ${-0.5 *(vehicle_body_height + steering_height)}" front_or_rear="rear" left_or_right="left"/>
+    <xacro:steering_and_wheel_macro parent="vehicle1_body_link" xyz="${-wheel_base_half_length} ${right_steering_y} ${-0.5 *(vehicle_body_height + steering_height)}" front_or_rear="rear" left_or_right="right"/>
     
-    <!-- (前輪の車軸と後輪の車軸をつなぐ棒)と(後輪の車軸)をつなぐ縦棒 -->
-    <joint name="vehicle1_rear_steering_joint" type="fixed">
-        <origin xyz="0 0 ${-axel_to_axel_half_length}" rpy="0 ${radians(-90)} 0"/>
-        <parent link="vehicle1_axel_to_axle_link"/>
-        <child  link="vehicle1_rear_steering_link"/>
-    </joint>
-    <link name="vehicle1_rear_steering_link">
-        <inertial>
-            <origin xyz="0 0 ${-(steering_length)*0.5}" rpy="0 0 0"/>
-            <mass value="${vehicle_steering_mass}"/>
-            <inertia ixx="${I_steering_xx}" ixy="0.0" ixz="0.0" iyy="${I_steering_yy}" iyz="0.0" izz="${I_steering_zz}"/>
-        </inertial>
-        <visual>
-        <origin xyz="0 0 ${-(axel_to_axel_z - wheel_radius)*0.5}" rpy="0 0 0" />
-            <geometry>
-                <cylinder radius="${axel_radius}" length="${axel_to_axel_z - wheel_radius}" />
-            </geometry>
-            <material name="yellow" />
-        </visual>
-        <collision>
-        <origin xyz="0 0 ${-(axel_to_axel_z - wheel_radius)*0.5}" rpy="0 0 0" />
-            <geometry>
-                <cylinder radius="${axel_radius}" length="${axel_to_axel_z - wheel_radius}" />
-            </geometry>
-        </collision>
-    </link>
-    <gazebo reference="vehicle1_rear_steering_link">
-        <material>Gazebo/Yellow</material>
-    </gazebo>
-
-    <!-- 後輪の車軸-->
-    <joint name="vehicle1_rear_wheel_axle_joint" type="fixed">
-        <origin xyz="0 0 ${-(axel_to_axel_z - wheel_radius)}" rpy="${radians(-90)} 0 0"/>
-        <parent link="vehicle1_rear_steering_link"/>
-        <child  link="vehicle1_rear_wheel_axle_link"/>
-    </joint>
-    <link name="vehicle1_rear_wheel_axle_link">
-        <inertial>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <mass value="${vehicle_axel_mass}"/>
-            <inertia ixx="${I_axel_xx}" ixy="0.0" ixz="0.0" iyy="${I_axel_yy}" iyz="0.0" izz="${I_axel_zz}"/>
-        </inertial>
-        <visual>
-        <origin xyz="0 0 0" rpy="0 0 0" />
-            <geometry>
-                <cylinder radius="${axel_radius}" length="${axel_half_length*2}" />
-            </geometry>
-            <material name="yellow" />
-        </visual>
-        <collision>
-        <origin xyz="0 0 0" rpy="0 0 0" />
-            <geometry>
-                <cylinder radius="${axel_radius}" length="${axel_half_length*2}" />
-            </geometry>
-        </collision>
-    </link>
-    <gazebo reference="vehicle1_rear_wheel_axle_link">
-        <material>Gazebo/Yellow</material>
-    </gazebo>
-    
-    <!-- 後輪 -->
-    <xacro:wheel_macro vehicle="vehicle1" front_or_rear="rear" right_or_left="right" parent="vehicle1_rear_wheel_axle_link" xyz="0 0 ${-wheel_separation_half_length}" color="blue" gazebo_color="Blue"/>
-    <xacro:wheel_macro vehicle="vehicle1" front_or_rear="rear" right_or_left="left" parent="vehicle1_rear_wheel_axle_link" xyz="0 0 ${wheel_separation_half_length}" color="blue" gazebo_color="Blue"/>
-
-    <!-- トランスミッション -->
-    <!-- 前輪右車輪のトランスミッション(受動車輪のためEffort入力Effort出力) -->
-    <transmission name="vehicle1_front_right_trans" type="SimpleTransmission">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="vehicle1_front_right_joint">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="vehicle1_front_right_motor">
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <!-- 前輪左車輪のトランスミッション(受動車輪のためEffort入力Effort出力) -->
+    <!-- Transmission -->
+    <!-- front left wheel(受動車輪のためEffort入力Effort出力) -->
     <transmission name="vehicle1_front_left_trans" type="SimpleTransmission">
         <type>transmission_interface/SimpleTransmission</type>
         <joint name="vehicle1_front_left_joint">
@@ -510,33 +532,53 @@
             <mechanicalReduction>1</mechanicalReduction>
         </actuator>
     </transmission>
-    <!-- 後輪右車輪のトランスミッション(差動二輪のためVelocity入力Effort出力) -->
-    <transmission name="vehicle1_rear_right_trans" type="SimpleTransmission">
+    <!-- front left steering(Position入力Effort出力) -->
+    <transmission name="vehicle1_front_left_steering_trans" type="SimpleTransmission">
         <type>transmission_interface/SimpleTransmission</type>
-        <joint name="vehicle1_rear_right_joint">
-            <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+        <joint name="vehicle1_front_left_steering_joint">
+            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
         </joint>
-        <actuator name="vehicle1_rear_right_motor">
+        <actuator name="vehicle1_front_left_steering_motor">
             <mechanicalReduction>1</mechanicalReduction>
         </actuator>
     </transmission>
-    <!-- 後輪左車輪のトランスミッション(差動二輪のためVelocity入力Effort出力) -->
+    <!-- front right wheel(受動車輪のためEffort入力Effort出力) -->
+    <transmission name="vehicle1_front_right_trans" type="SimpleTransmission">
+        <type>transmission_interface/SimpleTransmission</type>
+        <joint name="vehicle1_front_right_joint">
+            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+        </joint>
+        <actuator name="vehicle1_front_right_motor">
+            <mechanicalReduction>1</mechanicalReduction>
+        </actuator>
+    </transmission>
+    <!-- front right steering(Position入力Effort出力) -->
+    <transmission name="vehicle1_front_right_steering_trans" type="SimpleTransmission">
+        <type>transmission_interface/SimpleTransmission</type>
+        <joint name="vehicle1_front_right_steering_joint">
+            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+        </joint>
+        <actuator name="vehicle1_front_right_steering_motor">
+            <mechanicalReduction>1</mechanicalReduction>
+        </actuator>
+    </transmission>
+    <!-- rear left wheel(差動二輪のためVelocity入力Effort出力) -->
     <transmission name="vehicle1_rear_left_trans" type="SimpleTransmission">
         <type>transmission_interface/SimpleTransmission</type>
         <joint name="vehicle1_rear_left_joint">
-            <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
         </joint>
         <actuator name="vehicle1_rear_left_motor">
             <mechanicalReduction>1</mechanicalReduction>
         </actuator>
     </transmission>
-    <!-- 前輪ステアリングのトランスミッション(Position入力Effort出力) -->
-    <transmission name="vehicle1_front_steering_trans" type="SimpleTransmission">
+    <!-- rear right wheel(差動二輪のためVelocity入力Effort出力) -->
+    <transmission name="vehicle1_rear_right_trans" type="SimpleTransmission">
         <type>transmission_interface/SimpleTransmission</type>
-        <joint name="vehicle1_front_steering_joint">
+        <joint name="vehicle1_rear_right_joint">
             <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
         </joint>
-        <actuator name="vehicle1_front_steering_motor">
+        <actuator name="vehicle1_rear_right_motor">
             <mechanicalReduction>1</mechanicalReduction>
         </actuator>
     </transmission>
@@ -548,5 +590,13 @@
             <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
             <legacyModeNS>true</legacyModeNS>
         </plugin>
+
+        <plugin name="ground_truth" filename="libgazebo_ros_p3d.so">
+            <frameName>world</frameName>
+            <bodyName>base_link</bodyName>
+            <topicName>/true_position</topicName>
+            <updateRate>20</updateRate>
+        </plugin>
+
     </gazebo>
 </robot>

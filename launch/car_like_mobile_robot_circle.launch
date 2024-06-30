@@ -4,10 +4,18 @@
     <arg name="model" default="$(find car_like_mobile_robot_pkg)/xacro/car_like_mobile_robot.xacro"/>
     <arg name="rvizconfig" default="$(find car_like_mobile_robot_pkg)/rviz/urdf.rviz" />
     <arg name="robot_name" default="car_like_mobile_robot"/>
+    <param name="use_sim_time" value="true" />
     <arg name="init_pose" default=""/>
+
+    <!-- initial pose -->
+    <arg name="x" default="0.0"/>
+    <arg name="y" default="0.0"/>
+    <arg name="z" default="0.3"/>
+    <arg name="yaw" default="0.0"/>
 
     <!-- Gazeboワールドを起動 -->
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="verbose" value="true"/>
         <arg name="paused" value="false"/>
         <arg name="use_sim_time" value="true"/>
         <arg name="gui" value="true"/>
@@ -20,12 +28,20 @@
 
     <!-- ロボットモデルを起動 -->
     <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" 
-        args="-param robot_description -urdf -model $(arg robot_name) $(arg init_pose) -z 0.3"/>
+        args="-x $(arg x)
+            -y $(arg y)
+            -z $(arg z)
+            -Y $(arg yaw)
+            -param robot_description 
+            -urdf
+            -model $(arg robot_name)"/>
 
     <!-- コントローラの起動 -->
     <rosparam command="load" file="$(find car_like_mobile_robot_pkg)/config/car_like_mobile_robot.yaml"/>
     <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" ns="/car_like_mobile_robot"
-        args="joint_state_controller vehicle1_front_right_trans vehicle1_front_left_trans vehicle1_front_steering_trans vehicle1_rear_diff_drive_controller"/>
+        args="joint_state_controller vehicle1_front_left_trans vehicle1_front_left_steering_trans
+                                    vehicle1_front_right_trans vehicle1_front_right_steering_trans
+                                    vehicle1_rear_left_trans   vehicle1_rear_right_trans"/>
     
     <!-- robot_state_publisherの起動 -->
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen">

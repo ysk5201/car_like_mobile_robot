@@ -147,6 +147,8 @@ add_executable(calc_wheel_odom src/calc_wheel_odom.cpp)
 
 add_executable(pub_wheel_odom src/pub_wheel_odom.cpp)
 
+add_executable(pub_true_odom src/pub_true_odom.cpp)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -172,6 +174,11 @@ target_link_libraries(calc_wheel_odom
 target_link_libraries(pub_wheel_odom
   ${catkin_LIBRARIES}
 )
+
+target_link_libraries(pub_true_odom
+  ${catkin_LIBRARIES}
+)
+
 
 #############
 ## Install ##
