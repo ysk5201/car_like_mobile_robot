@@ -83,15 +83,6 @@
     <xacro:property name="wheel_mass" value="5.19" />
     <xacro:property name="wheel_visual_cylinder_mass" value="0.0" />
 
-    <!-- タイヤがめり込まないように -->
-    <!-- <xacro:property name="body_mass" value="1.0" />
-    <xacro:property name="steering_mass" value="1.0" />
-    <xacro:property name="plate_under_the_steering_mass" value="1.0" />
-    <xacro:property name="side_plate_of_wheel_mass" value="1.0" />
-    <xacro:property name="axel_mass" value="5.0" />
-    <xacro:property name="wheel_mass" value="1.0" />
-    <xacro:property name="wheel_visual_cylinder_mass" value="0.0" /> -->
-
     <!-- リンクのイナーシャの設定 -->
     <xacro:property name="I_body_xx" value="${body_mass*(vehicle_body_height*vehicle_body_height + vehicle_body_length*vehicle_body_length) / 12}" />
     <xacro:property name="I_body_yy" value="${body_mass*(vehicle_body_width*vehicle_body_width + vehicle_body_height*vehicle_body_height) / 12}" />
@@ -116,10 +107,10 @@
     <xacro:property name="I_wheel_visual_cylinder_zz" value="${wheel_visual_cylinder_mass*wheel_visual_cylinder_radius*wheel_visual_cylinder_radius / 2}" />
 
     <!-- 摩擦力 -->
-    <!-- <xacro:property name="mu_1" value="0.8" />
-    <xacro:property name="mu_2" value="0.8" /> -->
-    <xacro:property name="mu_1" value="1.2" />
-    <xacro:property name="mu_2" value="1.2" />
+    <xacro:property name="mu_1" value="0.8" />
+    <xacro:property name="mu_2" value="0.8" />
+    <!-- <xacro:property name="mu_1" value="1.2" />
+    <xacro:property name="mu_2" value="1.2" /> -->
     <!-- <xacro:property name="mu_1" value="10" />
     <xacro:property name="mu_2" value="10" /> -->
     <xacro:property name="kp" value="2000000" />
@@ -392,7 +383,7 @@
             <material>Gazebo/Red</material>
             <sensor type="gpu_ray" name="${prefix}">
                 <pose>0 0 0 0 0 0</pose>
-                <visualize>false</visualize>
+                <visualize>true</visualize>
                 <update_rate>30</update_rate>
                 <ray>
                     <scan>

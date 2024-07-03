@@ -1,4 +1,5 @@
 #include <ros/ros.h>
+#include <cmath>
 #include <geometry_msgs/Quaternion.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <nav_msgs/Odometry.h>
@@ -7,15 +8,15 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_ros/transform_broadcaster.h>
-#include <cmath>
 
 
 class CalcWheelOdom {
 public:
   CalcWheelOdom() 
-    : x_(0.0), y_(0.0), th_(0.0), omega_(0.0),
-      last_round_pos_fl_(0.0), last_round_pos_fr_(0.0), 
-      last_round_pos_rl_(0.0), last_round_pos_rr_(0.0) {
+    : x_(0.0), y_(0.0), th_(0.0), 
+      imu_omega_(0.0), imu_th_(0.0),
+      fl_wheel_last_pos_(0.0), fr_wheel_last_pos_(0.0), 
+      rl_wheel_last_pos_(0.0), rr_wheel_last_pos_(0.0) {
     
     odom_pub_ = nh_.advertise<nav_msgs::Odometry>("odom", 1);
     joint_state_sub_ = nh_.subscribe("/car_like_mobile_robot/joint_states", 1, &CalcWheelOdom::jointStateCallback, this);
@@ -51,11 +52,17 @@ public:
       return;
     }
 
+    // 各車輪の位置
+    double fl_wheel_cur_pos = cur_round_pos_fl * R;
+    double fr_wheel_cur_pos = cur_round_pos_fr * R;
+    double rl_wheel_cur_pos = cur_round_pos_rl * R;
+    double rr_wheel_cur_pos = cur_round_pos_rr * R;
+
     // 各車輪の速度(移動距離/dt)
-    double vel_fl = R * (cur_round_pos_fl - last_round_pos_fl_) / dt;
-    double vel_fr = R * (cur_round_pos_fr - last_round_pos_fr_) / dt;
-    double vel_rl = R * (cur_round_pos_rl - last_round_pos_rl_) / dt;
-    double vel_rr = R * (cur_round_pos_rr - last_round_pos_rr_) / dt;
+    double vel_fl = (fl_wheel_cur_pos - fl_wheel_last_pos_) / dt;
+    double vel_fr = (fr_wheel_cur_pos - fr_wheel_last_pos_) / dt;
+    double vel_rl = (rl_wheel_cur_pos - rl_wheel_last_pos_) / dt;
+    double vel_rr = (rr_wheel_cur_pos - rr_wheel_last_pos_) / dt;
 
     // each wheel x y vlocity in robot coordinate frame
     double vx_fl = vel_fl * cos(phi_fl);
@@ -78,10 +85,8 @@ public:
     double W_rr = ( half_W) / (4*(half_Lv*half_Lv + half_W*half_W));
 
     // 車体中心の旋回角速度
-    // use wheel odom data
-    // double omega = W_fl*vel_fl + W_fr*vel_fr + W_rl*vel_rl + W_rr*vel_rr;
-    // use imu data(omega_)
-    double omega = omega_;
+    double omega = W_fl*vel_fl + W_fr*vel_fr + W_rl*vel_rl + W_rr*vel_rr; // use wheel odom data
+    // double omega = imu_omega_; // use imu data(imu_omega_)
 
     // world coordinate frameにおける車体中心の微小時間odometry
     double delta_x = (vx*cos(th_) - vy*sin(th_)) * dt;
@@ -96,6 +101,7 @@ public:
     // normalize th_ to [-pi, pi]
     th_ = normalizeAngle(th_);
 
+    // th_ = imu_th_; // use imu data(imu_th_)
 
     // publish odometry
     nav_msgs::Odometry odom;
@@ -117,7 +123,7 @@ public:
     // Set the velocity
     odom.twist.twist.linear.x = vx;
     odom.twist.twist.linear.y = vy;
-    odom.twist.twist.angular.z = omega_;
+    odom.twist.twist.angular.z = omega;
 
     odom_pub_.publish(odom);
 
@@ -138,16 +144,16 @@ public:
 
     // update last param
     last_time_ = current_time;
-    last_round_pos_fl_ = cur_round_pos_fl;
-    last_round_pos_fr_ = cur_round_pos_fr;
-    last_round_pos_rl_ = cur_round_pos_rl;
-    last_round_pos_rr_ = cur_round_pos_rr;
+    fl_wheel_last_pos_ = fl_wheel_cur_pos;
+    fr_wheel_last_pos_ = fr_wheel_cur_pos;
+    rl_wheel_last_pos_ = rl_wheel_cur_pos;
+    rr_wheel_last_pos_ = rr_wheel_cur_pos;
   }
 
   void imuCallback(const sensor_msgs::Imu::ConstPtr& imu_msg) {
-    // IMUから角速度(omega)を取得
-    omega_ = imu_msg->angular_velocity.z;
-    // th_ = imu_msg->orientation.z;
+    // IMUから角速度(imu_omega_), 角度(imu_th_)を取得
+    imu_omega_ = imu_msg->angular_velocity.z;
+    imu_th_ = imu_msg->orientation.z;
   }
 
 private:
@@ -158,8 +164,8 @@ private:
   tf2_ros::TransformBroadcaster odom_broadcaster_;
 
   double x_, y_, th_;
-  double omega_;
-  double last_round_pos_fl_, last_round_pos_fr_, last_round_pos_rl_, last_round_pos_rr_;
+  double imu_omega_, imu_th_;
+  double fl_wheel_last_pos_, fr_wheel_last_pos_, rl_wheel_last_pos_, rr_wheel_last_pos_;
   ros::Time last_time_;
 
   double normalizeAngle(double angle) {

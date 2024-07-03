@@ -18,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   gmapping
   imu_filter_madgwick
   imu_complementary_filter
+  cartographer_ros
 )
 
 ## System dependencies are found with CMake's conventions
@@ -112,7 +113,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES car_like_mobile_robot_pkg
-#  CATKIN_DEPENDS roscpp rospy std_msgs tf
+  CATKIN_DEPENDS roscpp rospy std_msgs tf cartographer_ros
 #  DEPENDS system_lib
 )
 

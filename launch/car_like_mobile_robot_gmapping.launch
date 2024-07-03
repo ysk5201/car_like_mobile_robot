@@ -53,7 +53,7 @@
     <node name="circle" pkg="car_like_mobile_robot_pkg" type="circle" output="screen"/>
     
     <!-- pub_wheel_odom ノードの起動 -->
-    <!-- <node name="pub_wheel_odom" pkg="car_like_mobile_robot_pkg" type="pub_wheel_odom" output="screen" /> -->
+    <node name="pub_wheel_odom" pkg="car_like_mobile_robot_pkg" type="pub_wheel_odom" output="screen" />
 
     <!-- pub_true_odom ノードの起動 -->
     <!-- <node name="pub_true_odom" pkg="car_like_mobile_robot_pkg" type="pub_true_odom" output="screen" /> -->
@@ -64,20 +64,20 @@
         <remap from="imu/data_raw" to="imu_link/imu" />
     </node>
     
-    <!-- calc_wheel_odom ノードの起動 -->
-    <node name="calc_wheel_odom" pkg="car_like_mobile_robot_pkg" type="calc_wheel_odom" output="screen" />
+    <!-- calc_wheel_odom ノードの起動(ekf_localization使わないとき) -->
+    <!-- <node name="calc_wheel_odom" pkg="car_like_mobile_robot_pkg" type="calc_wheel_odom" output="screen" /> -->
 
     <!-- Load the ekf_localization node -->
-    <!-- <node name="ekf_localization_node" pkg="robot_localization" type="ekf_localization_node" clear_params="true">
+    <node name="ekf_localization_node" pkg="robot_localization" type="ekf_localization_node" clear_params="true">
         <rosparam command="load" file="$(find car_like_mobile_robot_pkg)/config/ekf_params.yaml" />
         <remap from="/odometry/filtered" to="fusion/odom" />
-        <remap from="odom0" to="filtered_odom" /> -->
+        <remap from="odom0" to="filtered_odom" />
         <!-- <remap from="odom0" to="true_odom" /> -->
         <!-- use imu filter -->
-        <!-- <remap from="imu0"  to="/imu/data" /> -->
+        <remap from="imu0"  to="/imu/data" />
         <!-- not use imu filter -->
         <!-- <remap from="imu0"  to="imu_link/imu" /> -->
-    <!-- </node> -->
+    </node>
 
     <!-- gmapping -->
     <node name="slam_gmapping" pkg="gmapping" type="slam_gmapping" clear_params="true">

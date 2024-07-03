@@ -5,6 +5,7 @@
     <arg name="rvizconfig" default="$(find car_like_mobile_robot_pkg)/rviz/slam_toolbox.rviz" />
     <arg name="robot_name" default="car_like_mobile_robot"/>
     <arg name="init_pose" default=""/>
+    <arg name="use_imu_data" default="false"/>
     <param name="use_sim_time" value="true" />
 
     <!-- initial pose -->
@@ -52,25 +53,31 @@
     <!-- 各ジョイントの目標値をPublish -->
     <node name="circle" pkg="car_like_mobile_robot_pkg" type="circle" output="screen"/>
 
-    <!-- pub_wheel_odom ノードの起動 -->
-    <!-- <node name="pub_wheel_odom" pkg="car_like_mobile_robot_pkg" type="pub_wheel_odom" output="screen" /> -->
-    
-    <!-- calc_wheel_odom ノードの起動 -->
-    <node name="calc_wheel_odom" pkg="car_like_mobile_robot_pkg" type="calc_wheel_odom" output="screen" />
+    <!-- wheel odometry + filterd imu + ekf -->
+    <group if="$(arg use_imu_data)">
+        <!-- pub_wheel_odomノード(/filterd_odomをpublish) -->
+        <node name="pub_wheel_odom" pkg="car_like_mobile_robot_pkg" type="pub_wheel_odom" output="screen" />
+        
+        <!-- imu filter -->
+        <node name="imu_filter_madgwick" pkg="imu_filter_madgwick" type="imu_filter_node" clear_params="true">
+            <rosparam command="load" file="$(find car_like_mobile_robot_pkg)/config/imu_filter_madgwick.yaml" />
+            <remap from="imu/data_raw" to="imu_link/imu" />
+        </node>
 
-    <!-- imu filter -->
-    <!-- <node name="imu_filter_madgwick" pkg="imu_filter_madgwick" type="imu_filter_node" clear_params="true">
-        <rosparam command="load" file="$(find car_like_mobile_robot_pkg)/config/imu_filter_madgwick.yaml" />
-        <remap from="imu/data_raw" to="imu_link/imu" />
-    </node> -->
+        <!-- Load the ekf_localization node -->
+        <node name="ekf_localization_node" pkg="robot_localization" type="ekf_localization_node" clear_params="true">
+            <rosparam command="load" file="$(find car_like_mobile_robot_pkg)/config/ekf_params.yaml" />
+            <remap from="/odometry/filtered" to="fusion/odom" />
+            <remap from="odom0" to="filtered_odom" />
+            <remap from="imu0"  to="/imu/data" />
+        </node>
+    </group>
 
-    <!-- Load the ekf_localization node -->
-    <!-- <node name="ekf_localization_node" pkg="robot_localization" type="ekf_localization_node" clear_params="true">
-        <rosparam command="load" file="$(find car_like_mobile_robot_pkg)/config/ekf_params.yaml" />
-        <remap from="/odometry/filtered" to="fusion/odom" />
-        <remap from="odom0" to="filtered_odom" />
-        <remap from="imu0"  to="/imu/data" />
-    </node> -->
+    <!-- wheel odometry only -->
+    <group unless="$(arg use_imu_data)">
+        <!-- calc_wheel_odomノード(/odomと/tfをpublish) -->
+        <node name="calc_wheel_odom" pkg="car_like_mobile_robot_pkg" type="calc_wheel_odom" output="screen" />
+    </group>
 
     <!-- slam_toolbox -->
     <node name="slam_toolbox_node" pkg="slam_toolbox" type="async_slam_toolbox_node" clear_params="true">

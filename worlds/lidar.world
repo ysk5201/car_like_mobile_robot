@@ -380,10 +380,10 @@
       <static>1</static>
     </model>
     <state world_name='default'>
-      <sim_time>1198 624000000</sim_time>
-      <real_time>80 293436022</real_time>
+      <sim_time>0</sim_time>
+      <real_time>0</real_time>
       <wall_time>1716863694 629749533</wall_time>
-      <iterations>79694</iterations>
+      <iterations>0</iterations>
       <model name='ground_plane'>
         <pose>0 0 0 0 -0 0</pose>
         <scale>1 1 1</scale>

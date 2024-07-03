@@ -1,7 +1,7 @@
+#include <ros/ros.h>
 #include <cmath>
-#include "ros/ros.h"
-#include "std_msgs/String.h"
 #include <std_msgs/Float64.h>
+#include <std_msgs/String.h>
 #include <time.h>
 
 
@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
   std::cout << "Press 's' to start publishing\n";
   std::cin >> input;
   
-  double v = 0.4; // 後輪間中点のvelocity
+  double v = 0.8; // 後輪間中点のvelocity
 
   int count = 0;
 

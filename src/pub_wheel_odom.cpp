@@ -1,58 +1,65 @@
-#include <nav_msgs/Odometry.h>
 #include <ros/ros.h>
+#include <cmath>
+#include <geometry_msgs/Quaternion.h>
+#include <nav_msgs/Odometry.h>
 #include <sensor_msgs/JointState.h>
-#include <tf/transform_broadcaster.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 
-const double PI = 3.1415926535897932384626433832795028841971;
+class PubWheelOdom {
+public:
+  PubWheelOdom() 
+    : x_(0.0), y_(0.0), th_(0.0),
+      fl_wheel_last_pos_(0.0), fr_wheel_last_pos_(0.0), 
+      rl_wheel_last_pos_(0.0), rr_wheel_last_pos_(0.0) {
+    
+    odom_pub_ = nh_.advertise<nav_msgs::Odometry>("filtered_odom", 1);
+    joint_state_sub_ = nh_.subscribe("/car_like_mobile_robot/joint_states", 1, &PubWheelOdom::jointStateCallback, this);
+    last_time_ = ros::Time::now();
+  }
 
-// prameter of body center
-double x = 0.0;
-double y = 0.0;
-double theta = 0.0;
+  void jointStateCallback(const sensor_msgs::JointState::ConstPtr& joint_state) {
 
-const double Lv = 1.0; // wheel_base(車軸間距離)(xacroファイルと合わせる必要あり)
-const double half_Lv = 0.5 * Lv;
-const double W = 2.0* ((Lv*0.5) - (Lv*0.3*0.4*0.6)); // Tread幅
-const double half_W = 0.5 * W;
-const double R = 0.3;   // wheel radius
-
-ros::Time last_time;
-double last_round_pos_fl = 0.0;
-double last_round_pos_fr = 0.0;
-double last_round_pos_rl = 0.0;
-double last_round_pos_rr = 0.0;
-
-ros::Publisher odom_pub;
-
-// オドメトリデータのコールバック関数
-bool processOdom(const sensor_msgs::JointState::ConstPtr& msg) {
+    static const double PI = 3.1415926535897932384626433832795028841971;
+    static const double Lv = 1.0; // wheel_base(車軸間距離)(xacroファイルと合わせる必要あり)
+    static const double half_Lv = 0.5 * Lv;
+    static const double W = 2.0 * ((Lv * 0.5) - (Lv * 0.3 * 0.4 * 0.6)); // Tread幅
+    static const double half_W = 0.5 * W;
+    static const double R = 0.3;   // wheel radius
 
     ros::Time current_time = ros::Time::now();
-    double dt = (current_time - last_time).toSec();
-    last_time = current_time;
-    
-    if (dt < 0.0001) return false; // Interval too small to integrate with
 
-    // front wheelの角度
-    double cur_round_pos_fl = msg->position[0];
-    double cur_round_pos_fr = msg->position[2];
+    // front wheel round pos
+    double cur_round_pos_fl = joint_state->position[0];
+    double cur_round_pos_fr = joint_state->position[2];
+    // front steering pos
+    double phi_fl = joint_state->position[1];
+    double phi_fr = joint_state->position[3];
+    // rear wheel round pos
+    double cur_round_pos_rl = joint_state->position[4];
+    double cur_round_pos_rr = joint_state->position[5];
 
-    // front steeringの角度
-    double phi_fl = msg->position[1];
-    double phi_fr = msg->position[3];
+    double dt = (current_time - last_time_).toSec();
+  
+    if (dt < 0.0001) {
+      ROS_WARN("Interval too small to integrate with");
+      return;
+    }
 
-    // rear wheelの角度
-    double cur_round_pos_rl = msg->position[4];
-    double cur_round_pos_rr = msg->position[5];
+    // 各車輪の位置
+    double fl_wheel_cur_pos = cur_round_pos_fl * R;
+    double fr_wheel_cur_pos = cur_round_pos_fr * R;
+    double rl_wheel_cur_pos = cur_round_pos_rl * R;
+    double rr_wheel_cur_pos = cur_round_pos_rr * R;
 
     // 各車輪の速度(移動距離/dt)
-    double vel_fl = R * (cur_round_pos_fl - last_round_pos_fl) / dt;
-    double vel_fr = R * (cur_round_pos_fr - last_round_pos_fr) / dt;
-    double vel_rl = R * (cur_round_pos_rl - last_round_pos_rl) / dt;
-    double vel_rr = R * (cur_round_pos_rr - last_round_pos_rr) / dt;
+    double vel_fl = (fl_wheel_cur_pos - fl_wheel_last_pos_) / dt;
+    double vel_fr = (fr_wheel_cur_pos - fr_wheel_last_pos_) / dt;
+    double vel_rl = (rl_wheel_cur_pos - rl_wheel_last_pos_) / dt;
+    double vel_rr = (rr_wheel_cur_pos - rr_wheel_last_pos_) / dt;
 
-    // robot coordinate frameにおける各車輪のxy方向の速度
+    // each wheel x y vlocity in robot coordinate frame
     double vx_fl = vel_fl * cos(phi_fl);
     double vx_fr = vel_fr * cos(phi_fr);
     double vx_rl = vel_rl;
@@ -63,7 +70,7 @@ bool processOdom(const sensor_msgs::JointState::ConstPtr& msg) {
     double vy_rl = 0.0;
     double vy_rr = 0.0;
 
-    // robot coordinate frameにおける車体中心のxy方向の速度
+    // x y vlocity in robot coordinate frame
     double vx = 0.25 * (vx_fl + vx_fr + vx_rl + vx_rr);
     double vy = 0.25 * (vy_fl + vy_fr + vy_rl + vy_rr);
 
@@ -73,75 +80,76 @@ bool processOdom(const sensor_msgs::JointState::ConstPtr& msg) {
     double W_rr = ( half_W) / (4*(half_Lv*half_Lv + half_W*half_W));
 
     // 車体中心の旋回角速度
+    // use wheel odom data
     double omega = W_fl*vel_fl + W_fr*vel_fr + W_rl*vel_rl + W_rr*vel_rr;
 
     // world coordinate frameにおける車体中心の微小時間odometry
-    double delta_x = (vx*cos(theta) - vy*sin(theta)) * dt;
-    double delta_y = (vx*sin(theta) + vy*cos(theta)) * dt;
+    double delta_x = (vx*cos(th_) - vy*sin(th_)) * dt;
+    double delta_y = (vx*sin(th_) + vy*cos(th_)) * dt;
     double delta_theta = omega * dt;
 
     // 車体中心のパラメータを更新
-    x += delta_x;
-    y += delta_y;
-    theta += delta_theta;
+    x_ += delta_x;
+    y_ += delta_y;
+    th_ += delta_theta;
 
-    // 角度を -π から π の範囲に正規化
-    theta = fmod(theta + PI, 2 * PI) - PI;
-    if (theta < -PI) {
-        theta += 2 * PI;
-    }
+    // normalize th_ to [-pi, pi]
+    th_ = normalizeAngle(th_);
 
-    // 計算したOdometryをPublish
+
+    // publish odometry
     nav_msgs::Odometry odom;
     odom.header.stamp = current_time;
     odom.header.frame_id = "odom";
     odom.child_frame_id = "base_link";
 
     // Set the position
-    odom.pose.pose.position.x = x;
-    odom.pose.pose.position.y = y;
+    odom.pose.pose.position.x = x_;
+    odom.pose.pose.position.y = y_;
     odom.pose.pose.position.z = 0.0;
-    odom.pose.pose.orientation = tf::createQuaternionMsgFromYaw(theta);
+    tf2::Quaternion tf_quat;
+    tf_quat.setRPY(0, 0, th_);
+    geometry_msgs::Quaternion odom_quat = tf2::toMsg(tf_quat);
+    odom.pose.pose.orientation = odom_quat;
 
-    ROS_INFO("x: %lf, y: %lf, theta: %lf\n", x, y, theta);
+    // ROS_INFO("x: %lf, y: %lf, theta: %lf\n", x, y, theta);
 
     // Set the velocity
     odom.twist.twist.linear.x = vx;
     odom.twist.twist.linear.y = vy;
     odom.twist.twist.angular.z = omega;
 
-    // Odometryに変換してPublish
-    odom_pub.publish(odom);
+    odom_pub_.publish(odom);
 
-    // 前回のwheelの角度を更新
-    last_round_pos_fl = cur_round_pos_fl;
-    last_round_pos_fr = cur_round_pos_fr;
-    last_round_pos_rl = cur_round_pos_rl;
-    last_round_pos_rr = cur_round_pos_rr;
+    // update last param
+    last_time_ = current_time;
+    fl_wheel_last_pos_ = fl_wheel_cur_pos;
+    fr_wheel_last_pos_ = fr_wheel_cur_pos;
+    rl_wheel_last_pos_ = rl_wheel_cur_pos;
+    rr_wheel_last_pos_ = rr_wheel_cur_pos;
+  }
 
-    return true;
-}
+private:
+  ros::NodeHandle nh_;
+  ros::Publisher odom_pub_;
+  ros::Subscriber joint_state_sub_;
 
-void odomCallback(const sensor_msgs::JointState::ConstPtr &msg) {
-    if (!processOdom(msg)) {
-        ROS_WARN("Interval too small to integrate with");
-    }
-}
+  double x_, y_, th_;
+  double fl_wheel_last_pos_, fr_wheel_last_pos_, rl_wheel_last_pos_, rr_wheel_last_pos_;
+  ros::Time last_time_;
 
-int main(int argc, char** argv) {
+  double normalizeAngle(double angle) {
+    static const double PI = 3.1415926535897932384626433832795028841971;
+    angle = fmod(angle + PI, 2.0 * PI);
+    if (angle < 0.0)
+      angle += 2.0 * PI;
+    return angle - PI;
+  }
+};
 
-    // ROSの初期化
-    ros::init(argc, argv, "ekf_localization");
-    ros::NodeHandle nh;
-    odom_pub = nh.advertise<nav_msgs::Odometry>("filtered_odom", 1);
-
-    // joint_staesをsubscribe
-    ros::Subscriber odom_sub = nh.subscribe("/car_like_mobile_robot/joint_states", 1, odomCallback);
-
-    last_time = ros::Time::now();
-
-    // メインループ
-    ros::spin();
-
-    return 0;
+int main(int argc, char **argv) {
+  ros::init(argc, argv, "pub_wheel_odom");
+  PubWheelOdom pub_wheel_odom;
+  ros::spin();
+  return 0;
 }

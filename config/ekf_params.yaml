@@ -1,4 +1,4 @@
-frequency: 100
+frequency: 30
 sensor_timeout: 0.1
 two_d_mode: true  # 2Dモード（ヨー角のみを考慮）
 transform_time_offset: 0.0
@@ -15,19 +15,19 @@ base_link_frame: base_link
 odom0: odom0
 odom0_config: [false, false, false,  # x, y, z
                false, false, false,  # roll, pitch, yaw
-               true,  false, false,  # vx, vy, vz
+               true,  true,  false,  # vx, vy, vz
                false, false, false,  # vroll, vpitch, vyaw
                false, false, false]  # ax, ay, az
 # odom0_nodelay: true
 
 imu0: imu0
 imu0_config: [false, false, false,  # x, y, z
-              false, false, true,  # roll, pitch, yaw
+              false, false, false,  # roll, pitch, yaw
               false, false, false,  # vx, vy, vz
               false, false, true,   # vroll, vpitch, vyaw
               false, false, false]  # ax, ay, az
 imu0_differential: false
 imu0_remove_gravitational_acceleration: true
 # imu0_nodelay: true
-imu0_queue_size: 1
+# imu0_queue_size: 1
 imu0_linear_acceleration_rejection_threshold: true
