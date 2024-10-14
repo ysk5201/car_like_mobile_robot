@@ -96,23 +96,10 @@ geometry_msgs::Twist MPCController::solveMPC() {
 
     ROS_INFO("bezier_param_row_index %d", bezier_param_row_index);
 
-        // for (int i = 0; i < Np; ++i) {
-        //     int index = current_index + i;
-        //     if (index < bezier_param.size()) {
-        //         ref_x[i] = bezier_param[index][2];  // x座標
-        //         ref_y[i] = bezier_param[index][3];  // y座標
-        //         ref_th[i] = bezier_param[index][6]; // 姿勢角度
-        //     } else {
-        //         // 予測ホライズンを超えた場合は最後の点の値を維持
-        //         ref_x[i] = bezier_param[bezier_param.size() - 1][2];
-        //         ref_y[i] = bezier_param[bezier_param.size() - 1][3];
-        //         ref_th[i] = bezier_param[bezier_param.size() - 1][6];
-        //     }
-        // }
-
-    //     std::vector<double> ref_x = { /* ベジェ曲線のx座標 */ };
-    //     std::vector<double> ref_y = { /* ベジェ曲線のy座標 */ };
-
+    // MPCに用いるref配列をbezier_param_配列から取得 getRefParamArray(head_index, column_num)
+    std::vector<double> ref_x  = getRefParamArray(bezier_param_row_index, 2);
+    std::vector<double> ref_y  = getRefParamArray(bezier_param_row_index, 3);
+    std::vector<double> ref_th = getRefParamArray(bezier_param_row_index, 6);
 
     // MPCアルゴリズムによる最適制御入力計算
     // Eigen::VectorXd state(4);  // 状態ベクトル [x, y, θ, φ]
@@ -192,6 +179,25 @@ int MPCController::findPsIndex(double x, double y) {
 	}
 	int ret = last_j;
 	return(ret);
+}
+
+// bezier_param_配列から指定した行と列のデータを取得する関数
+std::vector<double> MPCController::getRefParamArray(int bezier_param_row_index, int column_index) {
+    std::vector<double> ref_param_array;
+
+    // bezier_param_row_index から Np個先までのデータを取得
+    for (int i = 0; i < Np; ++i) {
+        int row_index = bezier_param_row_index + i;
+
+        // 行インデックスが範囲外にならないようにチェック
+        if (row_index < bezier_param_.size()) {
+            ref_param_array.push_back(bezier_param_[row_index][column_index]);
+        } else {
+            // 範囲外になった場合は、最後の行のデータを追加
+            ref_param_array.push_back(bezier_param_.back()[column_index]);
+        }
+    }
+    return ref_param_array;
 }
 
 int main(int argc, char** argv) {

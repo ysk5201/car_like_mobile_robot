@@ -67,4 +67,5 @@ private:
     void phiCallback(const std_msgs::Float64::ConstPtr& msg);
 
     int findPsIndex(double x, double y);
+    std::vector<double> getRefParamArray(int bezier_param_row_index, int column_index);
 };
