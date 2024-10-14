@@ -20,9 +20,7 @@ public:
     MPCController(const ros::NodeHandle& nh, const std::vector<std::vector<double>>& bezier_param);
     ~MPCController();
 
-    void updateState(const nav_msgs::Odometry::ConstPtr& msg);
-
-    geometry_msgs::Twist solveMPC(const std::vector<double>& ref_x, const std::vector<double>& ref_y);
+    geometry_msgs::Twist solveMPC();
 
 private:
     // constants
@@ -68,5 +66,5 @@ private:
     void setCurrentPosition(double pos_x, double pos_y, double pos_th);
     void phiCallback(const std_msgs::Float64::ConstPtr& msg);
 
-    // double findPs(double x, double y);
+    int findPsIndex(double x, double y);
 };
