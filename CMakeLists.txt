@@ -14,11 +14,6 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   nav_msgs
   geometry_msgs
-  robot_localization
-  gmapping
-  imu_filter_madgwick
-  imu_complementary_filter
-  cartographer_ros
 )
 
 ## System dependencies are found with CMake's conventions
@@ -111,9 +106,9 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES car_like_mobile_robot_pkg
-  CATKIN_DEPENDS roscpp rospy std_msgs tf cartographer_ros
+  INCLUDE_DIRS include
+  LIBRARIES car_like_mobile_robot_pkg
+  CATKIN_DEPENDS roscpp rospy std_msgs tf
 #  DEPENDS system_lib
 )
 
@@ -124,7 +119,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -132,6 +127,7 @@ include_directories(
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/car_like_mobile_robot_pkg.cpp
 # )
+add_library(bezier_curve src/bezier_curve.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -143,12 +139,10 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/car_like_mobile_robot_pkg_node.cpp)
 add_executable(circle src/circle.cpp)
-
 add_executable(calc_wheel_odom src/calc_wheel_odom.cpp)
-
 add_executable(pub_wheel_odom src/pub_wheel_odom.cpp)
-
 add_executable(pub_true_odom src/pub_true_odom.cpp)
+add_executable(mpc_controller src/mpc_controller.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -167,17 +161,17 @@ add_executable(pub_true_odom src/pub_true_odom.cpp)
 target_link_libraries(circle
   ${catkin_LIBRARIES}
 )
-
 target_link_libraries(calc_wheel_odom
   ${catkin_LIBRARIES}
 )
-
 target_link_libraries(pub_wheel_odom
   ${catkin_LIBRARIES}
 )
-
 target_link_libraries(pub_true_odom
   ${catkin_LIBRARIES}
+)
+target_link_libraries(mpc_controller
+  ${catkin_LIBRARIES} bezier_curve
 )
 
 
