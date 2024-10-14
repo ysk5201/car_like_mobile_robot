@@ -2,8 +2,15 @@
 
 #include <ros/ros.h>
 // #include <Eigen/Dense>
+#include <array>
+#include <cmath>
 #include <geometry_msgs/Twist.h>
+#include <iostream>
 #include <nav_msgs/Odometry.h>
+#include <sensor_msgs/JointState.h>
+#include <std_msgs/Float64.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <vector>
 
 
@@ -41,11 +48,25 @@ private:
 
     // Member Variables
     ros::NodeHandle nh_;
+    ros::Subscriber tf_odom_sub_;
+    ros::Subscriber fusion_odom_sub_;
+    ros::Subscriber true_position_sub_;
+    ros::Subscriber phi_sub_;
+
     std::vector<std::vector<double>> bezier_param_;
     double x_, y_, th_, phi_;
     double velocity_, steering_angle_;
 
     bool is_full_search_; // Ps探索(全探索, 部分探索)
+
+    // Member functions
+    void initializeSubscribers();
+
+    void tfOdomCallback(const nav_msgs::Odometry::ConstPtr& msg);
+    void fusionOdomCallback(const nav_msgs::Odometry::ConstPtr& msg);
+    void truePositionCallback(const nav_msgs::Odometry::ConstPtr& msg);
+    void setCurrentPosition(double pos_x, double pos_y, double pos_th);
+    void phiCallback(const std_msgs::Float64::ConstPtr& msg);
 
     // double findPs(double x, double y);
 };

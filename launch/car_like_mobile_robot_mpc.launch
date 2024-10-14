@@ -53,6 +53,9 @@
     <!-- 各ジョイントの目標値をPublish -->
     <node name="mpc_controller" pkg="car_like_mobile_robot_pkg" type="mpc_controller" output="screen"/>
 
+    <!-- tf_listenerノード(/map2baselinkをpublish) -->
+    <node name="tf_listener" pkg="car_like_mobile_robot_pkg" type="tf_listener" output="screen" />
+
     <!-- wheel odometry + filterd imu + ekf -->
     <group if="$(arg use_imu_data)">
         <!-- pub_wheel_odomノード(/filterd_odomをpublish) -->

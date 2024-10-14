@@ -6,10 +6,88 @@ MPCController::MPCController(const ros::NodeHandle& nh, const std::vector<std::v
     nh_(nh), bezier_param_(bezier_param),
     x_(0.0), y_(0.0), th_(0.0), phi_(0.0),
     is_full_search_(true) {
+    initializeSubscribers();
 }
 
 MPCController::~MPCController() {
 	std::cout << "MPCController::~MPCController() is called!" << std::endl;
+}
+
+void MPCController::initializeSubscribers() {
+    tf_odom_sub_ = nh_.subscribe("/map2baselink", 1, &MPCController::tfOdomCallback, this);
+    fusion_odom_sub_ = nh_.subscribe("/fusion/odom", 1, &MPCController::fusionOdomCallback, this);
+    true_position_sub_ = nh_.subscribe("/true_position", 1, &MPCController::truePositionCallback, this);
+    phi_sub_ = nh_.subscribe("/phi_topic", 1, &MPCController::phiCallback, this);
+}
+
+void MPCController::tfOdomCallback(const nav_msgs::Odometry::ConstPtr& msg) {
+
+    double x = msg->pose.pose.position.x;
+    double y = msg->pose.pose.position.y;
+
+    tf2::Quaternion q(
+        msg->pose.pose.orientation.x,
+        msg->pose.pose.orientation.y,
+        msg->pose.pose.orientation.z,
+        msg->pose.pose.orientation.w
+    );
+    double roll, pitch, yaw;
+    tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
+    double th = yaw;
+
+	// ROS_INFO("map2baselink x %lf, y %lf, th %lf", x, y, th);
+
+    setCurrentPosition(x, y, th);
+}
+
+void MPCController::fusionOdomCallback(const nav_msgs::Odometry::ConstPtr& msg) {
+
+    double x = msg->pose.pose.position.x;
+    double y = msg->pose.pose.position.y;
+
+    tf2::Quaternion q(
+        msg->pose.pose.orientation.x,
+        msg->pose.pose.orientation.y,
+        msg->pose.pose.orientation.z,
+        msg->pose.pose.orientation.w
+    );
+    double roll, pitch, yaw;
+    tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
+    double th = yaw;
+
+	// ROS_INFO("fusion x %lf, y %lf, th %lf", x, y, th);
+
+    // setCurrentPosition(x, y, th);
+}
+
+void MPCController::truePositionCallback(const nav_msgs::Odometry::ConstPtr& msg) {
+
+    double x = msg->pose.pose.position.x;
+    double y = msg->pose.pose.position.y;
+
+    tf2::Quaternion q(
+        msg->pose.pose.orientation.x,
+        msg->pose.pose.orientation.y,
+        msg->pose.pose.orientation.z,
+        msg->pose.pose.orientation.w
+    );
+    double roll, pitch, yaw;
+    tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
+    double th = yaw;
+
+	// ROS_INFO("true x %lf, y %lf, th %lf", x, y, th);
+
+    // setCurrentPosition(x, y, th);
+}
+
+void MPCController::phiCallback(const std_msgs::Float64::ConstPtr& msg) {
+    phi_ = msg->data;
+}
+
+void MPCController::setCurrentPosition(double pos_x, double pos_y, double pos_th) {
+    x_   = pos_x;
+    y_   = pos_y;
+    th_  = pos_th;
 }
 
 void MPCController::updateState(const nav_msgs::Odometry::ConstPtr& msg) {
