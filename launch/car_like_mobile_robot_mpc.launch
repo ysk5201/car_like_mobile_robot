@@ -5,7 +5,7 @@
     <arg name="rvizconfig" default="$(find car_like_mobile_robot_pkg)/rviz/slam_toolbox.rviz" />
     <arg name="robot_name" default="car_like_mobile_robot"/>
     <arg name="init_pose" default=""/>
-    <arg name="use_imu_data" default="false"/>
+    <arg name="use_imu_data" default="true"/>
     <param name="use_sim_time" value="true" />
 
     <!-- initial pose -->
@@ -68,7 +68,7 @@
         <node name="ekf_localization_node" pkg="robot_localization" type="ekf_localization_node" clear_params="true">
             <rosparam command="load" file="$(find car_like_mobile_robot_pkg)/config/ekf_params.yaml" />
             <remap from="/odometry/filtered" to="fusion/odom" />
-            <remap from="odom0" to="filtered_odom" />
+            <remap from="odom0" to="wheel_odom" />
             <remap from="imu0"  to="/imu/data" />
         </node>
     </group>
